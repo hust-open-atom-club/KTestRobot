@@ -234,7 +234,7 @@ func main(){
     }
 
     n3 := len(solved_warn_slice)
-    write5.WriteString("Solved Warningw:\n")
+    write5.WriteString("Solved Warnings:\n")
     write5.Flush()
     for j := 0; j < n3; j++{
         write5.WriteString(solved_warn_slice[j])
