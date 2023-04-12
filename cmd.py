@@ -2,10 +2,6 @@ import sys
 import os
 import subprocess
 from io import StringIO
-
-def re(argv):
-    cmd = "git apply -R {}".format(argv[0])
-    os.system(cmd)
     
 def main(argv):
     #pre smatch
