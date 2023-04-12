@@ -1,1 +1,1 @@
-log_smatch
+The log of running smatch.

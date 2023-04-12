@@ -1,1 +1,1 @@
-logss
+Extract the warning and error information in the log of running smatch.
