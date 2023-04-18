@@ -5,13 +5,13 @@ from io import StringIO
     
 def main(argv):
     #pre smatch
-    cmd = "/home/lsc20011130/smatch/smatch_scripts/kchecker {} >> ../log_smatch/pre_smatch.log".format(argv[1])
+    cmd = "/home/lsc20011130/smatch/smatch_scripts/kchecker {} >> ../log_smatch/{}_pre_smatch.log".format(argv[1], argv[2])
     os.system(cmd)
     
-    cmd = "cat ../log_smatch/pre_smatch.log | grep \"error:\" > ../logss/pre_smatch_error.log"
+    cmd = "cat ../log_smatch/pre_smatch.log | grep \"error:\" > ../logss/{}_pre_smatch_error.log".format(argv[2])
     os.system(cmd)
     
-    cmd = "cat ../log_smatch/pre_smatch.log | grep \"warn\" > ../logss/pre_smatch_warn.log"
+    cmd = "cat ../log_smatch/pre_smatch.log | grep \"warn\" > ../logss/{}_pre_smatch_warn.log".format(argv[2])
     os.system(cmd)
     
     #check patch
@@ -27,13 +27,13 @@ def main(argv):
     os.system(cmd)
     
     #smatch again
-    cmd = "/home/lsc20011130/smatch/smatch_scripts/kchecker {} >> ../log_smatch/after_smatch.log".format(argv[1])
+    cmd = "/home/lsc20011130/smatch/smatch_scripts/kchecker {} >> ../log_smatch/{}_after_smatch.log".format(argv[1], argv[2])
     os.system(cmd)
     
-    cmd = "cat ../log_smatch/after_smatch.log | grep \"error:\" > ../logss/after_smatch_error.log"
+    cmd = "cat ../log_smatch/after_smatch.log | grep \"error:\" > ../logss/{}_after_smatch_error.log".format(argv[2])
     os.system(cmd)
     
-    cmd = "cat ../log_smatch/after_smatch.log | grep \"warn\" > ../logss/after_smatch_warn.log"
+    cmd = "cat ../log_smatch/after_smatch.log | grep \"warn\" > ../logss/{}_after_smatch_warn.log".format(argv[2])
     os.system(cmd)
     
     #depatch
