@@ -1,0 +1,100 @@
+.list_table td, .list_table th {
+	border-left: 1px solid #ccc;
+}
+
+.list_table th {
+	background: #F4F4F4;
+}
+
+.list_table tr:nth-child(2n) {
+	background: #F4F4F4;
+}
+
+.list_table tr:hover {
+	background: #ffff99;
+}
+
+.list_table .report {
+	width: 80pt;
+	max-width: 80pt;
+	text-align: center;
+}
+
+.list_table .title {
+	width: 350pt;
+	max-width: 350pt;
+}
+
+.list_table .commit_list {
+	width: 500pt;
+	max-width: 500pt;
+}
+
+.list_table .tag {
+	font-family: Arial;
+	font-size: 8pt;
+	max-width: 60pt;
+}
+
+.list_table .time {
+	width: 200pt;
+	max-width: 200pt;
+}
+
+.list_table .status {
+	width: 80pt;
+	max-width: 80pt;
+}
+
+.list_table .patch {
+	width: 300pt;
+	max-width: 300pt;
+	text-align: right;
+}
+
+.list_table .kernel {
+	width: 80pt;
+	max-width: 80pt;
+}
+
+.list_table .maintainers {
+	max-width: 300pt;
+	white-space: normal;
+}
+
+.list_table .result {
+	width: 60pt;
+	max-width: 60pt;
+}
+
+.list_table .stat {
+	width: 55pt;
+	font-family: Arial;
+	text-align: right;
+}
+
+.list_table .type {
+	width: 80pt;
+	max-width: 80pt;
+	font-family: Arial;
+	/* text-align: right; */
+}
+
+.list_table .date {
+	width: 60pt;
+	max-width: 60pt;
+	font-family: Arial;
+	text-align: right;
+}
+
+.list_table .stat_name {
+	width: 150pt;
+	max-width: 150pt;
+	font-family: Arial;
+}
+
+.list_table .stat_value {
+	width: 120pt;
+	max-width: 120pt;
+	font-family: Arial;
+}

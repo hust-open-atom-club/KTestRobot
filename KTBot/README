@@ -1,0 +1,28 @@
+golang 1.2
+sudo apt-get install tofrodos
+set BUILD_DIR, BOOT_DIR, MAINLINE_DIR, LINUX_NEXT_DIR, SMATCH_DIR, KT_Bot_DIR in main.go,
+and all the DIRS are ended with '/'.
+maybe BOOT_DIR is unneccessary, you can put the boot script in workdir
+and if you do so, do not forget to modify the code of BootTest() function in checkers.go
+
+if you want to use the web function, set database info in sql.go, such as username, passwd...
+create the table like this: (otherbugs is the same as patchbugs)
+CREATE TABLE `patchbugs` (
+  `hash` varchar(65) NOT NULL,
+  `kernel` varchar(30) DEFAULT '',
+  `bug_info` varchar(1000) DEFAULT '',
+  `type` varchar(30) DEFAULT '',
+  `caused_by` varchar(100) DEFAULT '',
+  `reported_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `reported_by` varchar(30) DEFAULT '',
+  `status` varchar(30) DEFAULT '',
+  `comment` varchar(200) DEFAULT '',
+  PRIMARY KEY (`hash`)
+);
+The website will listen at :9090
+request ip:port/index and ip:port/upload to view the pages
+
+you can also change the basic text of the email in mailprocess.go
+
+To start the bot, just run 'go build -o KTestRobot *.go', and then run ./KTestRobot
+The code remains untested since last edit

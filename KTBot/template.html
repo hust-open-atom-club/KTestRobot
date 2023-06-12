@@ -1,0 +1,82 @@
+{{/* Common page head part, invoked with *uiHeader */}}
+{{define "head"}}
+	<link rel="stylesheet" href="/static/style.css"/>
+	<script src="/static/common.js"></script>
+{{end}}
+
+{{/* List of bugs caused by patch */}}
+{{define "patch_bug_list"}}
+{{if .}}
+{{if .PatchBugs}}
+<b>Patch Bugs</b>
+<table class="list_table">
+
+	<thead>
+	<tr>
+		<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+		<th><a onclick="return sortTable(this, 'Bug Info', textSort)" href="#">Bug Info</a></th>
+		<th><a onclick="return sortTable(this, 'Type', textSort)" href="#">Type</a></th>
+		<th><a onclick="return sortTable(this, 'Caused By', textSort)" href="#">Caused By</a></th>
+		<th><a onclick="return sortTable(this, 'Reported Time', timeSort)" href="#">Reported Time</a></th>
+		<th><a onclick="return sortTable(this, 'Reported By', textSort)" href="#">Reported By</a></th>
+		<th><a onclick="return sortTable(this, 'Status', textSort)" href="#">Status</a></th>
+		<th><a onclick="return sortTable(this, 'Comment', textSort)" href="#">Comment</a></th>
+	</tr>
+	</thead>
+	<tbody>
+	{{range $b := .PatchBugs}}
+		<tr>
+			<td class="kernel">{{$b.Kernel}}</td>
+			<td class="title">{{$b.BugInfo}}</td>
+			<td class="type">{{$b.Type}}</td>
+			<td class="patch">
+				<a href="patch/{{$b.CausedBy}}">{{$b.CausedBy}}</a>
+			</td>
+			<td class="time">{{$b.ReportedTime}}</td>
+			<td class="report">{{$b.ReportedBy}}</td>
+			<td class="status">{{$b.Status}}</td>
+			<td class="stat">{{$b.Comment}}</td>
+		</tr>
+	{{end}}
+	</tbody>
+</table>
+{{end}}
+{{end}}
+{{end}}
+
+{{/* List of bugs found before applying patch */}}
+{{define "other_bug_list"}}
+{{if .}}
+{{if .OtherBugs}}
+<br><br>
+<b>Other Bugs</b>
+<table class="list_table">
+
+	<thead>
+	<tr>
+		<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+		<th><a onclick="return sortTable(this, 'Bug Info', textSort)" href="#">Bug Info</a></th>
+		<th><a onclick="return sortTable(this, 'Type', textSort)" href="#">Type</a></th>
+		<th><a onclick="return sortTable(this, 'Reported Time', timeSort)" href="#">Reported Time</a></th>
+		<th><a onclick="return sortTable(this, 'Reported By', textSort)" href="#">Reported By</a></th>
+		<th><a onclick="return sortTable(this, 'Status', textSort)" href="#">Status</a></th>
+		<th><a onclick="return sortTable(this, 'Comment', textSort)" href="#">Comment</a></th>
+	</tr>
+	</thead>
+	<tbody>
+	{{range $b := .OtherBugs}}
+		<tr>
+			<td class="kernel">{{$b.Kernel}}</td>
+			<td class="title">{{$b.BugInfo}}</td>
+			<td class="type">{{$b.Type}}</td>
+			<td class="time">{{$b.ReportedTime}}</td>
+			<td class="report">{{$b.ReportedBy}}</td>
+			<td class="status">{{$b.Status}}</td>
+			<td class="stat">{{$b.Comment}}</td>
+		</tr>
+	{{end}}
+	</tbody>
+</table>
+{{end}}
+{{end}}
+{{end}}

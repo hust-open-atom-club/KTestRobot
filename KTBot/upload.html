@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Upload Patch</title>
+    <style>
+		body {
+			font-family: Arial, sans-serif;
+			background-color: #f5f5f5;
+			padding: 20px;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			height: 100vh;
+		}
+		form {
+			background-color: #fff;
+			padding: 20px;
+			border-radius: 5px;
+			box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+			max-width: 500px;
+			margin: 0 auto;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+            margin-top: -300px;
+		}
+		label {
+			display: block;
+			font-weight: bold;
+			margin-bottom: 5px;
+		}
+		input[type="file"] {
+			margin-bottom: 10px;
+			display: block;
+			padding: 10px;
+			border: 2px solid #ccc;
+			border-radius: 5px;
+			background-color: #fff;
+			color: #666;
+			font-size: 16px;
+			font-weight: bold;
+			cursor: pointer;
+			transition: border-color 0.3s;
+		}
+		input[type="file"]:hover {
+			border-color: #999;
+		}
+		input[type="submit"] {
+			background-color: #4CAF50;
+			color: white;
+			font-weight: bold;
+			border: none;
+			padding: 10px 20px;
+			border-radius: 5px;
+			cursor: pointer;
+			transition: background-color 0.3s;
+		}
+		input[type="submit"]:hover {
+			background-color: #3e8e41;
+		}
+	</style>
+</head>
+<body>
+	<form action="/upload" method="post" enctype="multipart/form-data">
+		<label for="file">select patch</label>
+		<input type="file" name="file" id="file"><br><br>
+		<input type="submit" value="upload">
+	</form>
+    <script>
+		function showSuccess() {
+			//在上传成功后弹出提示框
+			function showAlert() {
+				alert("文件上传成功！");
+			}
+			setTimeout(showAlert, 1000); //延迟1秒执行，以等待文件上传完成
+			return true;
+		}
+
+		//在上传失败时弹出提示框
+		function showFailure() {
+			alert("文件上传失败！");
+		}
+
+        //上传非.patch文件时弹出提示框
+        function showBadRequest() {
+            alert("目前仅支持上传 .patch 文件！");
+        }
+
+		//使用XMLHttpRequest对象上传文件
+		function uploadFile() {
+			var fileInput = document.getElementById("file");
+			var file = fileInput.files[0];
+			var xhr = new XMLHttpRequest();
+			xhr.open("POST", "/upload");
+			xhr.onreadystatechange = function() {
+				if (xhr.readyState === 4) {
+					if (xhr.status === 200) {
+						//文件上传成功
+						showSuccess();
+						fileInput.value = ""; //清空文件选择框
+					} else if (xhr.status === 400) {
+						//非补丁文件
+						showBadRequest();
+						fileInput.value = ""; //清空文件选择框
+					} else {
+						//文件上传失败
+                        // alert(xhr.status)
+						showFailure();
+					}
+				}
+			};
+			var formData = new FormData();
+			formData.append("file", file);
+			xhr.send(formData);
+			return false;
+		}
+
+		//监听表单提交事件，使用JavaScript提交表单
+		var form = document.getElementsByTagName("form")[0];
+		form.addEventListener("submit", function(event) {
+			event.preventDefault(); //阻止表单自动提交
+			uploadFile();
+		});
+	</script>
+</body>
+</html>
