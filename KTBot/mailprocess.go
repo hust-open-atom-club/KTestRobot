@@ -4,7 +4,6 @@ import (
 	"log"
 	"strings"
 	"io"
-	// "io/ioutil"
 	"net/smtp"
 	"os"
 	"os/exec"
@@ -13,11 +12,6 @@ import (
 	"github.com/emersion/go-imap/client"
 	"github.com/emersion/go-message/mail"
 )
-
-var defmailrecv = &EmailHeader {
-	FromName: "KTestRobot",
-	FromAddr: "ktestrobot@126.com",
-}
 
 func SendEmail(result string, h EmailHeader) {
 	//if pass all check, just send to patch committer
@@ -30,7 +24,6 @@ func SendEmail(result string, h EmailHeader) {
 	mailtext += "\n-- \nKTestRobot(Beta)"
 	log.Println("Connecting to smtp server")
 	to := []string{h.FromAddr}
-	//to = append(to, h.Cc...)
 	msg := []byte("To: " + h.FromAddr + "\r\n" +
 		"Subject: Re: " + h.Subject + "\r\n" +
 		"Cc: " + strings.Join(h.Cc, ";") + "\r\n" +
@@ -38,7 +31,6 @@ func SendEmail(result string, h EmailHeader) {
 		"\r\n" +
 		mailtext + "\r\n")
 	auth := smtp.PlainAuth("", username, passwd, "smtp.126.com")
-	log.Println("Auth")
 	err := smtp.SendMail("smtp.126.com:25", auth, username, to, msg)
 	if err != nil {
 		log.Println("SendMail", err)
@@ -51,7 +43,6 @@ func ReceiveEmail() {
 
 	// Connect to server
 	c, err := client.DialTLS("imap.126.com:993", nil)
-	// c, err := client.DialTLS("imap.gmail.com:993", nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -77,12 +68,6 @@ func ReceiveEmail() {
 	go func() {
 		done <- c.List("", "*", mailboxes)
 	}()
-
-	// log.Println("Mailboxes:")
-	// for m := range mailboxes {
-	// 	log.Println("* " + m.Name)
-	// }
-
 	if err := <-done; err != nil {
 		log.Fatal(err)
 	}
@@ -92,16 +77,8 @@ func ReceiveEmail() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// log.Println("Flags for INBOX:", mbox.Flags)
-
-	// Get messages
 	from := uint32(1)
 	to := mbox.Messages
-	// log.Println("Messages: ", to)
-	// log.Println("UnseenSeqNum: ", mbox.UnseenSeqNum)
-	// log.Println("Unread mail: ", mbox.Unseen)
-	// log.Println("Recent: ", mbox.Recent)
-
 	if mbox.Recent == 0 {
 		log.Println("No New Email")
 		return
@@ -113,7 +90,6 @@ func ReceiveEmail() {
 	section := &imap.BodySectionName{}
 	items := []imap.FetchItem{imap.FetchEnvelope, imap.FetchFlags, imap.FetchInternalDate, section.FetchItem()}
 	messages := make(chan *imap.Message, to - from + 2)
-	// messages := make(chan *imap.Message, mbox.Messages+2)
 	done = make(chan error, 1)
 	go func() {
 		done <- c.Fetch(seqset, items, messages)
@@ -131,7 +107,7 @@ func ReceiveEmail() {
 			continue
 		}
 		r := msg.GetBody(section)
-		if r == nil { //循环读取 不退出
+		if r == nil { 
 			continue
 		}
 
@@ -141,7 +117,6 @@ func ReceiveEmail() {
 			continue
 		}
 		header := mr.Header
-		// subject, err := header.Subject()
 		var emailheader EmailHeader
 		var patchname string
 		var ignore = 0
@@ -161,12 +136,6 @@ func ReceiveEmail() {
 		if date, err := header.Date(); err == nil {
 			log.Println("Date: ", date)
 			date = date.Local()
-			if enableStartTime == 1 {
-				if !date.After(StartTime) {
-					log.Println("This email was sent before StartTime, ignore.")
-					continue
-				}
-			}
 			patchname += date.Format("20060102150405") + ".patch"
 		}
 		if subject, err := header.Subject(); err == nil {
@@ -297,24 +266,50 @@ func MailProcess(mailtext string, patchname string, h EmailHeader) {
 		patchheader := "From: " + h.FromName
 		patchheader += "<" + h.FromAddr + ">\n"
 		patchheader += "Subject: " + h.Subject + "\n\n"
-		count, err := file.WriteString(patchheader + patch)
-		if err != nil {
-			log.Println("write file: ", err)
+		_, err1 := file.WriteString(patchheader + patch)
+		if err1 != nil {
+			log.Println("write file: ", err1)
 			return
 		}
-		log.Println("write to ", patchname, count)
+		log.Println("write to ", patchname)
 		cmd := exec.Command("fromdos", KTBot_DIR + "patch/" + patchname)
 		cmderr := cmd.Run()
 		if cmderr != nil {
 			log.Println("fromdos: ", cmderr)
 		}
 		checkresult := "--- Test Result ---\n"
-		checkres, csvres := CheckPatchAll(patchname, ChangedPath)
+		checkres:= CheckPatchAll(patchname, ChangedPath)
+
+		logname := patchname[:len(patchname) - 6]
+		log_file, err2 := os.Create("log/" + logname)
+		if err2 != nil {
+			log.Println("open log_file: ", err2)
+			return
+		}
+		defer log_file.Close()
+		_, err3 := log_file.WriteString(checkres)
+		if err3 != nil {
+			log.Println("write log_file: ", err3)
+			return
+		}
+		log.Println("write to ", logname)
+
 		checkresult += checkres
 		toSend := ChangedPath + LogMessage + checkresult
 		SendEmail(toSend, h)
-		ResultProcess(checkres, csvres, patchname)
 	} else {
 		log.Println("No Patch in this mail!")
 	}
+}
+
+func BotInit() bool {
+	dir, err := os.Getwd()
+	if err != nil {
+		log.Println("Init: ", err)
+		return false
+	}
+	PATCH_DIR = dir + "/patch/"
+	os.MkdirAll("./patch", 0777)
+	os.MkdirAll("./log", 0777)
+	return true
 }

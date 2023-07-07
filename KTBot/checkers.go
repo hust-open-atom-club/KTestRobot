@@ -12,31 +12,18 @@ import (
 	"bufio"
 )
 
-func CheckPatchAll(patchname string, changedpath string) (string, string) {
+func CheckPatchAll(patchname string, changedpath string) (string) {
 	var result string
-	var csvresult string
 	checkpatch_err, checkpatch := CheckPatchpl(patchname)
-	csvresult += ","
 	if checkpatch_err {
 		result += checkpatch
-		if strings.Contains(checkpatch, "PASS") {
-			csvresult += "PASS"
-		} else {
-			csvresult += "FAILED"
-		}
 	}
 
 	//default tree is linux-next
 	branch := "linux-next"
 	applynext_err, apply2linuxnext := ApplyPatch(branch, patchname)
-	csvresult += ","
 	if applynext_err {
 		result += apply2linuxnext
-		if strings.Contains(apply2linuxnext, "PASS") {
-			csvresult += "PASS,"
-		} else {
-			csvresult += "FAILED,"
-		}
 	}
 	if strings.Contains(apply2linuxnext, "FAILED") {
 		//Apply2Mainline() will change to mainline
@@ -44,85 +31,45 @@ func CheckPatchAll(patchname string, changedpath string) (string, string) {
 		applymain_err, apply2mainline := ApplyPatch(branch, patchname)
 		if applymain_err {
 			result += apply2mainline
-			if strings.Contains(apply2mainline, "PASS") {
-				csvresult += "PASS"
-			} else {
-				csvresult += "FAILED"
-			}
 		}
 		if strings.Contains(apply2mainline, "FAILED") {
-			// return result
-			return result, csvresult
+			return result
 		}
 	}
 
 	//static analysis
-	staticres, staticcsv := StaticAnalysis(branch, patchname, changedpath)
+	staticres := StaticAnalysis(branch, patchname, changedpath)
 	result += staticres
-	csvresult += staticcsv
 
-	// // build and boot
-	// builderr, build := BuildTest(branch, patchname)
-	// csvresult += ","
-	// if builderr {
-	// 	result += build
-	// 	if strings.Contains(build, "PASS") {
-	// 		csvresult += "PASS"
-	// 	} else {
-	// 		csvresult += "FAILED"
-	// 	}
-	// 	booterr, boot := BootTest()
-	// 	csvresult += ","
-	// 	if booterr {
-	// 		result += boot
-	// 		if strings.Contains(boot, "PASS") {
-	// 			csvresult += "PASS"
-	// 		} else {
-	// 			csvresult += "FAILED"
-	// 		}
-	// 	}
-	// }
+	/* build and boot
+	 builderr, build := BuildTest(branch, patchname)
+	 if builderr {
+	 	result += build
+	 	booterr, boot := BootTest()
+	 	if booterr {
+	 		result += boot
+	 	}
+	 }
+	 */
 
-	return result, csvresult
+	return result
 }
 
-func StaticAnalysis(branch string, patchname string, changedpath string) (string, string) {
+func StaticAnalysis(branch string, patchname string, changedpath string) (string) {
 	result := ""
-	csvresult := ""
 	smatch_err, checksmatch := CheckSmatch(branch, patchname, changedpath)
-	csvresult += ","
 	if smatch_err {
-		// result += checksmatch
-		if strings.Contains(checksmatch, "PASS") {
-			csvresult += "PASS"
-		} else {
-			csvresult += "FAILED"
-		}
 		result += checksmatch
 	}
 	cocci_err, cocci := CheckCocci(branch, patchname, changedpath)
-	csvresult += ","
 	if cocci_err {
-		// result += cocci
-		if strings.Contains(cocci, "PASS") {
-			csvresult += "PASS"
-		} else {
-			csvresult += "FAILED"
-		}
 		result += cocci
 	}
 	cppcheck_err, cppcheck := CheckCppcheck(branch, patchname, changedpath)
-	csvresult += ","
 	if cppcheck_err {
-		// result += cppcheck
-		if strings.Contains(cppcheck, "PASS") {
-			csvresult += "PASS"
-		} else {
-			csvresult += "FAILED"
-		}
 		result += cppcheck
 	}
-	return result, csvresult
+	return result
 }
 
 func CheckPatchpl(patchname string) (bool, string) {
@@ -136,60 +83,8 @@ func CheckPatchpl(patchname string) (bool, string) {
 	outStr := stdout.String()
 	if err != nil {
 		result = "*** CheckPatch\tFAILED ***\n"
-		// note := strings.Index(outStr, "NOTE:")
 		res := outStr + "\n" + errStr + "\n"
 		result += res
-		outsplit := strings.Split(outStr, "\n")
-		var def ToInsert
-		def.causedby = patchname
-		def.reportedby = "checkpatch.pl"
-		def.table = "patchbugs"
-		
-		buginfo := ""
-		flag := 0
-		btype := ""
-		for _, line := range outsplit {
-			if strings.Contains(line, "ERROR:") {
-				if flag == 1 {
-					tmp := def
-					tmp.buginfo = buginfo
-					bhash := BugHash(buginfo)
-					tmp.bhash = bhash
-					tmp.btype = btype
-					InsertBug(tmp)
-					buginfo = ""
-				}
-				buginfo += line + "\n"
-				flag = 1
-				btype = "error"
-			} else if strings.Contains(line, "WARNING:") {
-				if flag == 1 {
-					tmp := def
-					tmp.buginfo = buginfo
-					bhash := BugHash(buginfo)
-					tmp.bhash = bhash
-					tmp.btype = btype
-					InsertBug(tmp)
-					buginfo = ""
-				}
-				buginfo += line + "\n"
-				flag = 1
-				btype = "warning"
-			} else if strings.Contains(line, "total:") {
-				if flag == 1 {
-					tmp := def
-					tmp.buginfo = buginfo
-					bhash := BugHash(buginfo)
-					tmp.bhash = bhash
-					tmp.btype = btype
-					InsertBug(tmp)
-					buginfo = ""
-				}
-				break
-			} else {
-				buginfo += line + "\n"
-			}
-		}
 	}
 	return true, result
 }
@@ -229,12 +124,7 @@ func BugHash(info string) string{
 }
 
 func CheckCocci(branch string, patchname string, changedpath string) (bool, string) {
-	// log.Println("CheckCocci: ", patchname)
 	patch := PATCH_DIR + patchname
-	// checkerr := SwitchBranch(branch, ".")
-	// if !checkerr {
-	// 	return checkerr, ""
-	// }
 	dir := ""
 	switch branch {
 	case "mainline":
@@ -280,15 +170,7 @@ func CheckCocci(branch string, patchname string, changedpath string) (bool, stri
 		unapply.Dir = dir
 		unapply.Run()
 
-		var defdata ToInsert
-		defdata.causedby = patchname
-		defdata.kernel = branch
-		defdata.reportedby = "Coccinelle"
-		pre_warn, pre_err, new_warning, new_error := Logcmp(outStr, outStr1, "WARNING", "ERROR")
-		InsertBugList(defdata, pre_warn, "warning", "otherbugs")
-		InsertBugList(defdata, pre_err, "error", "otherbugs")
-		InsertBugList(defdata, new_warning, "warning", "patchbugs")
-		InsertBugList(defdata, new_error, "error", "patchbugs")
+		_, _, new_warning, new_error := Logcmp(outStr, outStr1, "WARNING", "ERROR")
 		if len(new_error) != 0 || len(new_warning) != 0 {
 			if flag == 0 {
 				flag = 1
@@ -360,12 +242,7 @@ func Logcmp(pre string, after string, swarn string, serr string) ([]string, []st
 }
 
 func CheckCppcheck(branch string, patchname string, changedpath string) (bool, string) {
-	// log.Println("CheckCppcheck: ", patchname)
 	patch := PATCH_DIR + patchname
-	// checkerr := SwitchBranch(branch, ".")
-	// if !checkerr {
-	// 	return checkerr, ""
-	// }
 	dir := ""
 	switch branch {
 	case "mainline":
@@ -391,8 +268,6 @@ func CheckCppcheck(branch string, patchname string, changedpath string) (bool, s
 		outStr := stdout.String()
 		if err != nil {
 			log.Println("CheckCppcheck check pre: ", err)
-			// log.Println("err: ", errStr)
-			// continue
 		}
 
 		//apply the patch
@@ -411,30 +286,17 @@ func CheckCppcheck(branch string, patchname string, changedpath string) (bool, s
 		
 		if err1 != nil {
 			log.Println("Cppcheck check after: ", err1)
-			// log.Println("err: ", errStr1)
-			// continue
 		}
 		unapply := exec.Command("git", "apply", "-R", patch)
 		unapply.Dir = dir
 		unapply.Run()
 
-		var defdata ToInsert
-		defdata.causedby = patchname
-		defdata.kernel = branch
-		defdata.reportedby = "Cppcheck"
-		pre_warn, pre_err, new_warning, new_error := Logcmp(errStr + outStr, errStr1 + outStr1, "warn", "error")
-		// log.Println("New warning: ", new_warning)
-		// log.Println("New error: ", new_error)
-		InsertBugList(defdata, pre_warn, "warning", "otherbugs")
-		InsertBugList(defdata, pre_err, "error", "otherbugs")
-		InsertBugList(defdata, new_warning, "warning", "patchbugs")
-		InsertBugList(defdata, new_error, "error", "patchbugs")
+		_, _, new_warning, new_error := Logcmp(errStr + outStr, errStr1 + outStr1, "warn", "error")
 		if len(new_error) != 0 || len(new_warning) != 0 {
 			if flag == 0 {
 				flag = 1
 				result = "*** CheckCppcheck\tFAILED ***\n"
 			}
-			
 			if len(new_error) != 0 {
 				result += "New error: \n"
 				for _, nerr := range new_error {
@@ -475,7 +337,6 @@ func CheckSmatch(branch string, patchname string, changedpath string) (bool, str
     result := "*** CheckSmatch\tPASS ***\n"
     flag := 0
     paths := strings.Split(changedpath, "\n")
-    // log.Println("paths: ", paths)
     for _, path := range paths {
         if !strings.Contains(path, ".c") {
             continue
@@ -507,15 +368,7 @@ func CheckSmatch(branch string, patchname string, changedpath string) (bool, str
 		unapply.Dir = dir
 		unapply.Run()
 
-		var defdata ToInsert
-		defdata.causedby = patchname
-		defdata.kernel = branch
-		defdata.reportedby = "Smatch"
-		pre_warn, pre_err, new_warning, new_error := Logcmp(outStr, outStr1, "warn", "error")
-		InsertBugList(defdata, pre_warn, "warning", "otherbugs")
-		InsertBugList(defdata, pre_err, "error", "otherbugs")
-		InsertBugList(defdata, new_warning, "warning", "patchbugs")
-		InsertBugList(defdata, new_error, "error", "patchbugs")
+		_, _, new_warning, new_error := Logcmp(outStr, outStr1, "warn", "error")
 		if len(new_error) != 0 || len(new_warning) != 0 {
 			if flag == 0 {
 				flag = 1
@@ -535,8 +388,6 @@ func CheckSmatch(branch string, patchname string, changedpath string) (bool, str
 				}
 			}
 		}
-        // log.Println("Smatch errstr: ", errStr)
-        // log.Println("Smatch errstr1: ", errStr1)
 		if BugHash(errStr) != BugHash(errStr1) {
 			if flag == 0 {
 				flag = 1
@@ -589,7 +440,6 @@ func SwitchBranch(branch string, dir string) bool{
 //Build Test, "make -j8 bzImage"
 //return false means internal error, true means test done 
 func BuildTest(branch string, patchname string) (bool, string) {
-	// log.Println("BuildTest: ", patchname)
 	BuildClean()
 	result := "*** BuildTest\tPASS ***\n"
 	patch := "patch/" + patchname
