@@ -30,8 +30,8 @@ func SendEmail(result string, h EmailHeader) {
 		"In-Reply-To: " + "<" + h.MessageID + ">" + "\r\n" +
 		"\r\n" +
 		mailtext + "\r\n")
-	auth := smtp.PlainAuth("", username, passwd, "smtp.126.com")
-	err := smtp.SendMail("smtp.126.com:25", auth, username, to, msg)
+	auth := smtp.PlainAuth("", "ktestrobot@126.com", "APSSXSSPWXLFXVUJ", "smtp.126.com")
+	err := smtp.SendMail("smtp.126.com:25", auth, "ktestrobot@126.com", to, msg)
 	if err != nil {
 		log.Println("SendMail", err)
 	}
@@ -57,7 +57,7 @@ func ReceiveEmail() {
 
 	defer c.Logout()
 
-	if err := c.Login(username, passwd); err != nil {
+	if err := c.Login("ktestrobot@126.com", "APSSXSSPWXLFXVUJ"); err != nil {
 		log.Fatal(err)
 	}
 	log.Println("Logged in")
@@ -271,8 +271,8 @@ func MailProcess(mailtext string, patchname string, h EmailHeader) {
 			log.Println("write file: ", err1)
 			return
 		}
-		log.Println("write to ", patchname)
-		cmd := exec.Command("fromdos", KTBot_DIR + "patch/" + patchname)
+
+		cmd := exec.Command("fromdos", PATCH_DIR + patchname)
 		cmderr := cmd.Run()
 		if cmderr != nil {
 			log.Println("fromdos: ", cmderr)
@@ -292,7 +292,6 @@ func MailProcess(mailtext string, patchname string, h EmailHeader) {
 			log.Println("write log_file: ", err3)
 			return
 		}
-		log.Println("write to ", logname)
 
 		checkresult += checkres
 		toSend := ChangedPath + LogMessage + checkresult
@@ -300,16 +299,4 @@ func MailProcess(mailtext string, patchname string, h EmailHeader) {
 	} else {
 		log.Println("No Patch in this mail!")
 	}
-}
-
-func BotInit() bool {
-	dir, err := os.Getwd()
-	if err != nil {
-		log.Println("Init: ", err)
-		return false
-	}
-	PATCH_DIR = dir + "/patch/"
-	os.MkdirAll("./patch", 0777)
-	os.MkdirAll("./log", 0777)
-	return true
 }

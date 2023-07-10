@@ -1,4 +1,4 @@
-golang 1.2
+work in golang 1.2
 sudo apt-get install tofrodos
 install smatch, coccicheck, cppcheck 
 

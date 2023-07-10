@@ -74,7 +74,7 @@ func StaticAnalysis(branch string, patchname string, changedpath string) (string
 
 func CheckPatchpl(patchname string) (bool, string) {
 	result := "*** CheckPatch\tPASS ***\n"
-	cmd := exec.Command(MAINLINE_DIR + "scripts/checkpatch.pl", KTBot_DIR + "patch/" + patchname)
+	cmd := exec.Command(MAINLINE_DIR + "scripts/checkpatch.pl", PATCH_DIR + patchname)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -421,7 +421,8 @@ func SwitchBranch(branch string, dir string) bool{
 		log.Println(errStr + outStr)
 		return false
 	}
-	
+
+	/*update branch
 	if !strings.Contains(outStr, "Your branch is up to date") {
 		pullcmd := exec.Command("git", "pull")
 		pullcmd.Dir = dir
@@ -431,53 +432,8 @@ func SwitchBranch(branch string, dir string) bool{
 			return false
 		}
 	}
-	conf := exec.Command("make", "defconfig")
-	conf.Dir = dir
-	conf.Run()
+	*/
 	return true
-}
-
-//Build Test, "make -j8 bzImage"
-//return false means internal error, true means test done 
-func BuildTest(branch string, patchname string) (bool, string) {
-	BuildClean()
-	result := "*** BuildTest\tPASS ***\n"
-	patch := "patch/" + patchname
-
-	switcherr := SwitchBranch(branch, BUILD_DIR)
-	if !switcherr {
-		return false, ""
-	}
-	//apply patch
-	apply := exec.Command("git", "apply", patch)
-	apply.Dir = BUILD_DIR
-	apply.Run()
-	//build
-	build := exec.Command("make", "-j8", "bzImage")
-	build.Dir = BUILD_DIR
-	var stderr bytes.Buffer
-	// build.Stdout = &stdout
-	build.Stderr = &stderr
-	builderr := build.Run()
-	errStr := stderr.String()
-	
-	if builderr != nil {
-		log.Println("BuildTest build err: ", builderr)
-		result = "*** BuildTest\tFAILED ***\n"
-		result += errStr
-	}
-
-	//unapply patch
-	unapply := exec.Command("git", "apply", "-R", patch)
-	unapply.Dir = BUILD_DIR
-	unapply.Run()
-	return true, result
-}
-
-func BuildClean() {
-	clean := exec.Command("make", "clean")
-	clean.Dir = BUILD_DIR
-	clean.Run()
 }
 
 //Boot Test, bzImage has built in BuildTest
