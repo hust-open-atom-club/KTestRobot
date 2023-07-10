@@ -1,11 +1,11 @@
-work in golang 1.2
-sudo apt-get install tofrodos
-install smatch, coccicheck, cppcheck 
+golang 1.2
 
-set BUILD_DIR, BOOT_DIR, MAINLINE_DIR, LINUX_NEXT_DIR, SMATCH_DIR, KT_Bot_DIR in main.go,
-and all the DIRS are ended with '/'.
-maybe BOOT_DIR is unneccessary, you can put the boot script in workdir
-and if you do so, do not forget to modify the code of BootTest() function in checkers.go
+sudo apt-get install gcc make sqlite3 libsqlite3-dev libdbd-sqlite3-perl libssl-dev libtry-tiny-perl tofrodos cppcheck ocaml coccinelle
 
-To start the bot, run 'go build -o KTestRobot *.go', and then run ./KTestRobot
-The code remains untested since last edit
+cd KTBot
+
+go build -o KTestRobot *.go
+
+./KTestRobot
+
+tips: The first time to run needs 1 ~ 2 hours
