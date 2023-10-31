@@ -1,0 +1,17 @@
+{
+    "smtpServer": "smtp.126.com",
+    "smtpPort": 25,
+    "smtpUsername": "ktestrobot@126.com",
+    "smtpPassword": "APSSXSSPWXLFXVUJ",
+    "imapServer": "imap.126.com",
+    "imapPort": 993,
+    "imapUsername": "ktestrobot@126.com",
+    "imapPassword": "APSSXSSPWXLFXVUJ",
+    "whiteLists": [
+        "@hust.edu.cn",
+        "hust-os-kernel-patches@googlegroups.com",
+        "dan.carpenter@linaro.org",
+        "error27@gmail.com",
+        "ktestrobot@126.com"
+      ]
+  }

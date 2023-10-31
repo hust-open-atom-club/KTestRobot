@@ -5,6 +5,7 @@ import (
 	"strings"
 	"io"
 	"net/smtp"
+	"strconv"
 	"os"
 	"os/exec"
 	"github.com/emersion/go-imap"
@@ -30,8 +31,8 @@ func SendEmail(result string, h EmailHeader) {
 		"In-Reply-To: " + "<" + h.MessageID + ">" + "\r\n" +
 		"\r\n" +
 		mailtext + "\r\n")
-	auth := smtp.PlainAuth("", "ktestrobot@126.com", "APSSXSSPWXLFXVUJ", "smtp.126.com")
-	err := smtp.SendMail("smtp.126.com:25", auth, "ktestrobot@126.com", to, msg)
+	auth := smtp.PlainAuth("", config.SMTPUsername, config.SMTPPassword, config.SMTPServer)
+	err := smtp.SendMail(config.SMTPServer + ":" + strconv.Itoa(config.SMTPPort), auth, config.SMTPUsername, to, msg)
 	if err != nil {
 		log.Println("SendMail", err)
 	}
@@ -40,9 +41,8 @@ func SendEmail(result string, h EmailHeader) {
 
 func ReceiveEmail() {
 	log.Println("Connecting to server...")
-
 	// Connect to server
-	c, err := client.DialTLS("imap.126.com:993", nil)
+	c, err := client.DialTLS(config.IMAPServer + ":" + strconv.Itoa(config.IMAPPort), nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -57,7 +57,7 @@ func ReceiveEmail() {
 
 	defer c.Logout()
 
-	if err := c.Login("ktestrobot@126.com", "APSSXSSPWXLFXVUJ"); err != nil {
+	if err := c.Login(config.IMAPUsername, config.IMAPPassword); err != nil {
 		log.Fatal(err)
 	}
 	log.Println("Logged in")
@@ -205,18 +205,11 @@ func ReceiveEmail() {
 
 func WhiteLists(mailaddr string) int {
 	var flag = 0
-	if strings.Contains(mailaddr, "@hust.edu.cn") {
-		flag = 1
-	} else if strings.Contains(mailaddr, "hust-os-kernel-patches@googlegroups.com") {
-		flag = 1
-	} else if strings.Contains(mailaddr, "dan.carpenter@linaro.org") {
-		flag = 1
-	} else if strings.Contains(mailaddr, "error27@gmail.com") {
-		flag = 1
-	} else if strings.Contains(mailaddr, "ktestrobot@126.com") {
-		flag = 1
-	} else {
-		flag = 0
+	for _, suffix := range config.WhiteLists {
+		if strings.Contains(mailaddr, suffix) {
+			flag = 1
+			break
+		}
 	}
 	return flag
 }
