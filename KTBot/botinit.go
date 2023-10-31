@@ -4,7 +4,21 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 )
+
+func RunCommand(Dir string, command string, args ...string) error {
+	cmd := exec.Command(command, args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if Dir != "" {
+		cmd.Dir = Dir
+	}
+	cmdStr := command + " " + strings.Join(args, " ")
+	log.Println("Executed command:", cmdStr)
+	err := cmd.Run()
+	return err
+}
 
 func BotInit() bool {
 	log.Println("Bot init......")
@@ -24,144 +38,88 @@ func BotInit() bool {
 	os.MkdirAll("./log", 0777)
 
 	//git clone smatch and make smatch
-	cmd := exec.Command("ls", "-l", "smatch")
-	cmd.Dir = KTBot_DIR
-	err = cmd.Run()
+	err = RunCommand(KTBot_DIR, "ls", "-l", "smatch")
 	if err != nil {
-		cmd = exec.Command("git", "clone", "git://repo.or.cz/smatch.git")
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		err = cmd.Run()
+		err = RunCommand("", "git", "clone", "git://repo.or.cz/smatch.git")
 		if err != nil {
 			log.Fatalf("smatch clone failed: %v", err)
 		}
 
-		cmd = exec.Command("make")
-		cmd.Dir = SMATCH_DIR
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		err = cmd.Run()
+		err = RunCommand(SMATCH_DIR, "make")
 		if err != nil {
 			log.Fatalf("smatch make failed: %v", err)
 		}
 	}
 
 	//download mainline
-	cmd = exec.Command("ls", "-l", "linux-master")
-	cmd.Dir = KTBot_DIR
-	err = cmd.Run()
+	err = RunCommand(KTBot_DIR, "ls", "-l", "linux-master")
 	if err != nil {
 		mainline_url := "https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/snapshot/linux-master.tar.gz"
-		cmd = exec.Command("wget", mainline_url)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		cmd.Dir = KTBot_DIR
-		err = cmd.Run()
+		err = RunCommand(KTBot_DIR, "wget", mainline_url)
 		if err != nil {
 			log.Fatalf("Download mainline failed: %v", err)
 		}
-
-		cmd = exec.Command("tar", "zxvf", "linux-master.tar.gz")
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		err = cmd.Run()
+		
+		err = RunCommand("", "tar", "zxvf", "linux-master.tar.gz")
 		if err != nil {
 			log.Fatalf("decompress mainline failed: %v", err)
 		}
 
-		cmd = exec.Command("rm", "-rf", "linux-master.tar.gz")
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		err = cmd.Run()
+		err = RunCommand("", "rm", "-rf", "linux-master.tar.gz")
 		if err != nil {
 			log.Fatalf("delete mainline.tar.gz failed: %v", err)
 		}
 
 		//set config
-		cmd = exec.Command("make", "defconfig")
-		cmd.Dir = MAINLINE_DIR
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		err = cmd.Run()
+		err = RunCommand(MAINLINE_DIR, "make", "defconfig")
 		if err != nil {
 			log.Fatalf("mainline make defconfig failed: %v", err)
 		}
 
 		//smatch build
-		cmd = exec.Command(SMATCH_DIR + "smatch_scripts/build_kernel_data.sh")
-		cmd.Dir = MAINLINE_DIR
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		err = cmd.Run()
+		err = RunCommand(MAINLINE_DIR, SMATCH_DIR + "smatch_scripts/build_kernel_data.sh")
 		if err != nil {
 			log.Fatalf("smatch build mainline kernel failed: %v", err)
 		}
 
-		cmd = exec.Command(SMATCH_DIR + "smatch_scripts/test_kernel.sh")
-		cmd.Dir = MAINLINE_DIR
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		err = cmd.Run()
+		err = RunCommand(MAINLINE_DIR, SMATCH_DIR + "smatch_scripts/test_kernel.sh")
 		if err != nil {
 			log.Fatalf("smatch test mainline kernel failed: %v", err)
 		}
 	}
 
 	//download linux-next
-	cmd = exec.Command("ls", "-l", "linux-next-master")
-	cmd.Dir = KTBot_DIR
-	err = cmd.Run()
+	err = RunCommand(KTBot_DIR, "ls", "-l", "linux-next-master")
 	if err != nil {
 		linux_next_url := "https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/snapshot/linux-next-master.tar.gz"
-		cmd = exec.Command("wget", linux_next_url)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		err = cmd.Run()
+		err = RunCommand(KTBot_DIR, "wget", linux_next_url)
 		if err != nil {
 			log.Fatalf("Download linux_next failed: %v", err)
 		}
 
-		cmd = exec.Command("tar", "zxvf", "linux-next-master.tar.gz")
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		err = cmd.Run()
+		err = RunCommand("", "tar", "zxvf", "linux-next-master.tar.gz")
 		if err != nil {
 			log.Fatalf("decompress linux_next failed: %v", err)
 		}
 
-		cmd = exec.Command("rm", "-rf", "linux-next-master.tar.gz")
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		err = cmd.Run()
+		err = RunCommand("", "rm", "-rf", "linux-next-master.tar.gz")
 		if err != nil {
 			log.Fatalf("delete linux_next.tar.gz failed: %v", err)
 		}
 
 		//set config
-		cmd = exec.Command("make", "defconfig")
-		cmd.Dir = LINUX_NEXT_DIR
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		err = cmd.Run()
+		err = RunCommand(LINUX_NEXT_DIR, "make", "defconfig")
 		if err != nil {
 			log.Fatalf("linux-next make defconfig failed: %v", err)
 		}
 
 		//smatch build
-		cmd = exec.Command(SMATCH_DIR + "smatch_scripts/build_kernel_data.sh")
-		cmd.Dir = LINUX_NEXT_DIR
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		err = cmd.Run()
+		err = RunCommand(LINUX_NEXT_DIR, SMATCH_DIR + "smatch_scripts/build_kernel_data.sh")
 		if err != nil {
 			log.Fatalf("smatch build linux-next kernel failed: %v", err)
 		}
 
-		cmd = exec.Command(SMATCH_DIR + "smatch_scripts/test_kernel.sh")
-		cmd.Dir = LINUX_NEXT_DIR
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		err = cmd.Run()
+		err = RunCommand(LINUX_NEXT_DIR, SMATCH_DIR + "smatch_scripts/test_kernel.sh")
 		if err != nil {
 			log.Fatalf("smatch test linux-next kernel failed: %v", err)
 		}
