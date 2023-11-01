@@ -37,17 +37,20 @@ var KTBot_DIR string
 
 
 func init() {
-	// 读取配置文件
+	// open config file
 	configFile, err := os.Open("config.json")
 	if err != nil {
-	log.Fatal(err)
+		log.Fatal(err)
 	}
 	defer configFile.Close()
 	
-	// 解析配置文件
-	err = json.NewDecoder(configFile).Decode(&config)
-	if err != nil {
-	log.Fatal(err)
+	// parse json file
+	dec := json.NewDecoder(configFile)
+	// disallow any unknown fields
+	dec.DisallowUnknownFields()
+
+	if err = dec.Decode(&config); err != nil {
+		log.Fatal(err)
 	}
 }
 
