@@ -33,3 +33,18 @@ go build -o KTestRobot *.go
 ```
 
 **tips: The first time would spend 1 ~ 2 hours to initialize the running environment**
+
+## Configuration Explanation
+
+The `config.json` file contains the following fields:
+
+1. `smtpServer`: The SMTP server used for sending emails. This field should be set to the address of the SMTP server.
+2. `smtpPort`: The port number for the SMTP server. This field should be set to the port number used by the SMTP server.
+3. `smtpUsername`: The username for authenticating with the SMTP server. This field should be set to the username used for authentication.
+4. `smtpPassword`: The password for authenticating with the SMTP server. This field should be set to the password used for authentication.
+5. `imapServer`: The IMAP server used for receiving emails. This field should be set to the address of the IMAP server.
+6. `imapPort`: The port number for the IMAP server. This field should be set to the port number used by the IMAP server.
+7. `imapUsername`: The username for authenticating with the IMAP server. This field should be set to the username used for authentication.
+8. `imapPassword`: The password for authenticating with the IMAP server. This field should be set to the password used for authentication.
+9. `whiteLists`: A list of email addresses that are considered as white-listed recipients. This field should be set to an array of email addresses.
+
