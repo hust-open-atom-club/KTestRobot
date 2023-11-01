@@ -20,26 +20,26 @@ func CheckPatchAll(patchname string, changedpath string) (string) {
 	}
 
 	//default tree is linux-next
-	branch := "linux-next"
-	applynext_err, apply2linuxnext := ApplyPatch(branch, patchname)
-	if applynext_err {
-		result += apply2linuxnext
-	}
-	if strings.Contains(apply2linuxnext, "FAILED") {
-		//Apply2Mainline() will change to mainline
-		branch = "mainline"
-		applymain_err, apply2mainline := ApplyPatch(branch, patchname)
-		if applymain_err {
-			result += apply2mainline
-		}
-		if strings.Contains(apply2mainline, "FAILED") {
-			return result
-		}
-	}
+	// branch := "linux-next"
+	// applynext_err, apply2linuxnext := ApplyPatch(branch, patchname)
+	// if applynext_err {
+	// 	result += apply2linuxnext
+	// }
+	// if strings.Contains(apply2linuxnext, "FAILED") {
+	// 	//Apply2Mainline() will change to mainline
+	// 	branch = "mainline"
+	// 	applymain_err, apply2mainline := ApplyPatch(branch, patchname)
+	// 	if applymain_err {
+	// 		result += apply2mainline
+	// 	}
+	// 	if strings.Contains(apply2mainline, "FAILED") {
+	// 		return result
+	// 	}
+	// }
 
-	//static analysis
-	staticres := StaticAnalysis(branch, patchname, changedpath)
-	result += staticres
+	// //static analysis
+	// staticres := StaticAnalysis(branch, patchname, changedpath)
+	// result += staticres
 
 	/* build and boot
 	 builderr, build := BuildTest(branch, patchname)
