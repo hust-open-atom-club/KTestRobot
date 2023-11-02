@@ -34,6 +34,10 @@ var MAINLINE_DIR string
 var LINUX_NEXT_DIR string
 var SMATCH_DIR string
 var KTBot_DIR string
+var ChangedPath string
+var emailheader EmailHeader
+var patchlist []string
+var LogMessage string
 
 
 func init() {
@@ -58,6 +62,27 @@ func main() {
 	BotInit()
 	for {
 		ReceiveEmail()
+		for _, patchname := range patchlist{
+			checkresult := "--- Test Result ---\n"
+			checkres:= CheckPatchAll(patchname, ChangedPath)
+			logname := patchname[:len(patchname) - 6]
+			log_file, err2 := os.Create("log/" + logname)
+			if err2 != nil {
+				log.Println("open log_file: ", err2)
+				return
+			}
+			defer log_file.Close()
+			_, err3 := log_file.WriteString(checkres)
+			if err3 != nil {
+				log.Println("write log_file: ", err3)
+				return
+			}
+
+			checkresult += checkres
+			toSend := ChangedPath + LogMessage + checkresult
+			SendEmail(toSend, emailheader)
+		}
+		patchlist = patchlist[:0]
 		time.Sleep(time.Minute * 20)
 	}
 }

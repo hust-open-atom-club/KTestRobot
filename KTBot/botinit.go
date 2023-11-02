@@ -9,8 +9,8 @@ import (
 
 func RunCommand(Dir string, command string, args ...string) error {
 	cmd := exec.Command(command, args...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	// cmd.Stdout = os.Stdout
+	// cmd.Stderr = os.Stderr
 	if Dir != "" {
 		cmd.Dir = Dir
 	}

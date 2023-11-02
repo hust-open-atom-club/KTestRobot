@@ -117,7 +117,6 @@ func ReceiveEmail() {
 			continue
 		}
 		header := mr.Header
-		var emailheader EmailHeader
 		var patchname string
 		var ignore = 0
 		if from, err := header.AddressList("From"); err == nil {
@@ -217,8 +216,8 @@ func WhiteLists(mailaddr string) int {
 func MailProcess(mailtext string, patchname string, h EmailHeader) {
 	mailsplit := strings.Split(mailtext, "\n")
 	var flag int = 0
-	ChangedPath := "--- Changed Paths ---\n"
-	LogMessage := ""
+	ChangedPath = "--- Changed Paths ---\n"
+	LogMessage = ""
 	for _, line := range mailsplit {
 		if strings.HasPrefix(line, "diff --git a") {
 			flag = 1
@@ -270,25 +269,26 @@ func MailProcess(mailtext string, patchname string, h EmailHeader) {
 		if cmderr != nil {
 			log.Println("fromdos: ", cmderr)
 		}
-		checkresult := "--- Test Result ---\n"
-		checkres:= CheckPatchAll(patchname, ChangedPath)
+		patchlist = append(patchlist, patchname)
+		// checkresult := "--- Test Result ---\n"
+		// checkres:= CheckPatchAll(patchname, ChangedPath)
 
-		logname := patchname[:len(patchname) - 6]
-		log_file, err2 := os.Create("log/" + logname)
-		if err2 != nil {
-			log.Println("open log_file: ", err2)
-			return
-		}
-		defer log_file.Close()
-		_, err3 := log_file.WriteString(checkres)
-		if err3 != nil {
-			log.Println("write log_file: ", err3)
-			return
-		}
+		// logname := patchname[:len(patchname) - 6]
+		// log_file, err2 := os.Create("log/" + logname)
+		// if err2 != nil {
+		// 	log.Println("open log_file: ", err2)
+		// 	return
+		// }
+		// defer log_file.Close()
+		// _, err3 := log_file.WriteString(checkres)
+		// if err3 != nil {
+		// 	log.Println("write log_file: ", err3)
+		// 	return
+		// }
 
-		checkresult += checkres
-		toSend := ChangedPath + LogMessage + checkresult
-		SendEmail(toSend, h)
+		// checkresult += checkres
+		// toSend := ChangedPath + LogMessage + checkresult
+		// SendEmail(toSend, h)
 	} else {
 		log.Println("No Patch in this mail!")
 	}
