@@ -64,19 +64,16 @@ var LogMessage string
 
 func parseInputConfig(configFile string) Config {
 	var inputConfig InputConfig
-
 	// open config file
 	configFd, err := os.Open(configFile)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer configFd.Close()
-	
 	// parse json file
 	dec := json.NewDecoder(configFd)
 	// disallow any unknown fields
 	dec.DisallowUnknownFields()
-
 	if err = dec.Decode(&inputConfig); err != nil {
 		log.Fatal(err)
 	}
@@ -109,8 +106,12 @@ func parseInputConfig(configFile string) Config {
 
 func main() {
 	flag.Parse()
-	BotInit()
+	if *flagConfig == "" {
+		log.Fatalf("No config file specified")
+	}
 	config := parseInputConfig(*flagConfig)
+	// init the environment of KTestRobot
+	BotInit()
 	for {
 		ReceiveEmail(config)
 		for _, patchname := range patchlist{
