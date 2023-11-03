@@ -28,7 +28,7 @@ sudo apt-get install libtry-tiny-perl tofrodos cppcheck ocaml coccinelle
 ```
 git clone https://gitee.com/dzm91_hust/KTestRobot
 cd KTBot
-go build -o KTestRobot *.go
+make
 ./KTestRobot
 ```
 
