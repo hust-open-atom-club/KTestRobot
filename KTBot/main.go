@@ -4,6 +4,7 @@ import (
 	"time"
 	"os"
 	"log"
+	"flag"
 	"strings"
 	"encoding/json"
 )
@@ -44,6 +45,11 @@ type EmailConfig struct {
         IMAPPort     int    `json:"imapPort"`
 }
 
+var (
+	flagConfig = flag.String("config", "", "configuration file")
+	flagDebug  = flag.Bool("debug", false, "dump all the logs")
+)
+
 var PATCH_DIR string
 var BOOT_DIR string
 var MAINLINE_DIR string
@@ -56,18 +62,18 @@ var patchlist []string
 var LogMessage string
 
 
-func parseInputConfig() Config {
+func parseInputConfig(configFile string) Config {
 	var inputConfig InputConfig
 
 	// open config file
-	configFile, err := os.Open("config.json")
+	configFd, err := os.Open(configFile)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer configFile.Close()
+	defer configFd.Close()
 	
 	// parse json file
-	dec := json.NewDecoder(configFile)
+	dec := json.NewDecoder(configFd)
 	// disallow any unknown fields
 	dec.DisallowUnknownFields()
 
@@ -102,8 +108,9 @@ func parseInputConfig() Config {
 }
 
 func main() {
+	flag.Parse()
 	BotInit()
-	config := parseInputConfig()
+	config := parseInputConfig(*flagConfig)
 	for {
 		ReceiveEmail(config)
 		for _, patchname := range patchlist{
