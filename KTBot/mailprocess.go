@@ -14,7 +14,7 @@ import (
 	"github.com/emersion/go-message/mail"
 )
 
-func SendEmail(result string, h EmailHeader) {
+func SendEmail(config Config, result string, h EmailHeader) {
 	//if pass all check, just send to patch committer
 	mailtext := "Hi, " + h.FromName + "\n"
 	mailtext += "This email is automatically replied by KTestRobot(Beta). "
@@ -39,7 +39,7 @@ func SendEmail(result string, h EmailHeader) {
 	log.Println("Successfully Send to: ", to)
 }
 
-func ReceiveEmail() {
+func ReceiveEmail(config Config) {
 	log.Println("Connecting to server...")
 	// Connect to server
 	c, err := client.DialTLS(config.IMAPServer + ":" + strconv.Itoa(config.IMAPPort), nil)
@@ -144,7 +144,7 @@ func ReceiveEmail() {
 		if cclist, err := header.AddressList("Cc"); err == nil {
 			log.Println("Cc:", cclist)
 			for _, cc := range cclist {
-				if WhiteLists(cc.Address) == 1 {
+				if WhiteLists(cc.Address, config) == 1 {
 					emailheader.Cc = append(emailheader.Cc, cc.Address)
 				} else {
 					ignore = 1
@@ -155,7 +155,7 @@ func ReceiveEmail() {
 		if to, err := header.AddressList("To"); err == nil {
 			log.Println("To: ", to)
 			for _, cc := range to {
-				if WhiteLists(cc.Address) == 1 {
+				if WhiteLists(cc.Address, config) == 1 {
 					emailheader.Cc = append(emailheader.Cc, cc.Address)
 				} else {
 					ignore = 1
@@ -202,7 +202,7 @@ func ReceiveEmail() {
 	log.Println("Done!")
 }
 
-func WhiteLists(mailaddr string) int {
+func WhiteLists(mailaddr string, config Config) int {
 	var flag = 0
 	for _, suffix := range config.WhiteLists {
 		if strings.Contains(mailaddr, suffix) {

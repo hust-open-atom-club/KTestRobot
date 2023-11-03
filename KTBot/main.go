@@ -4,6 +4,7 @@ import (
 	"time"
 	"os"
 	"log"
+	"strings"
 	"encoding/json"
 )
 
@@ -13,6 +14,15 @@ type EmailHeader struct {
 	Cc        []string
 	MessageID string
 	Subject   string
+}
+
+type InputConfig struct {
+	// Email account used to receive kernel patches, e.g., "ktestrobot@126.com"
+	Username     string `json:"username"`
+	// Password used to log in
+	Password     string `json:"password"`
+	// whitelist only to be processed
+	WhiteLists []string `json:"whiteLists"`
 }
 
 type Config struct {
@@ -27,7 +37,13 @@ type Config struct {
 	WhiteLists []string `json:"whiteLists"`
 }
 
-var config Config
+type EmailConfig struct {
+	SMTPServer   string `json:"smtpServer"`
+        SMTPPort     int    `json:"smtpPort"`
+        IMAPServer   string `json:"imapServer"`
+        IMAPPort     int    `json:"imapPort"`
+}
+
 var PATCH_DIR string
 var BOOT_DIR string
 var MAINLINE_DIR string
@@ -40,7 +56,9 @@ var patchlist []string
 var LogMessage string
 
 
-func init() {
+func parseInputConfig() Config {
+	var inputConfig InputConfig
+
 	// open config file
 	configFile, err := os.Open("config.json")
 	if err != nil {
@@ -53,15 +71,41 @@ func init() {
 	// disallow any unknown fields
 	dec.DisallowUnknownFields()
 
-	if err = dec.Decode(&config); err != nil {
+	if err = dec.Decode(&inputConfig); err != nil {
 		log.Fatal(err)
 	}
+	// retrieve email account configuration based on domain
+	mapDomaintoEmailAccount := map[string]EmailConfig{
+		"126.com": {"smtp.126.com", 25, "imap.126.com", 993},
+		"hust.edu.cn": {"mail.hust.edu.cn", 465, "mail.hust.edu.cn", 993},
+	}
+	data := strings.Split(inputConfig.Username, "@")
+	if len(data) != 2 {
+		log.Fatalf("Please provide the correct email account, e.g., ktestrobot@126.com")
+	}
+	emailAccount, ok := mapDomaintoEmailAccount[data[1]]
+	if !ok {
+		log.Fatalf("We don't support domain %s", data[1])
+	}
+	config := Config{
+		emailAccount.SMTPServer,
+		emailAccount.SMTPPort,
+		inputConfig.Username,
+		inputConfig.Password,
+		emailAccount.IMAPServer,
+		emailAccount.IMAPPort,
+		inputConfig.Username,
+		inputConfig.Password,
+		inputConfig.WhiteLists,
+	}
+	return config
 }
 
 func main() {
 	BotInit()
+	config := parseInputConfig()
 	for {
-		ReceiveEmail()
+		ReceiveEmail(config)
 		for _, patchname := range patchlist{
 			checkresult := "--- Test Result ---\n"
 			checkres:= CheckPatchAll(patchname, ChangedPath)
@@ -80,7 +124,7 @@ func main() {
 
 			checkresult += checkres
 			toSend := ChangedPath + LogMessage + checkresult
-			SendEmail(toSend, emailheader)
+			SendEmail(config, toSend, emailheader)
 		}
 		patchlist = patchlist[:0]
 		time.Sleep(time.Minute * 20)
