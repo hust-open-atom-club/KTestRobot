@@ -7,7 +7,6 @@ import (
 	"net/smtp"
 	"strconv"
 	"os"
-	"os/exec"
 	"github.com/emersion/go-imap"
 	id "github.com/emersion/go-imap-id"
 	"github.com/emersion/go-imap/client"
@@ -258,17 +257,17 @@ func MailProcess(mailtext string, patchname string, h EmailHeader) {
 		patchheader := "From: " + h.FromName
 		patchheader += "<" + h.FromAddr + ">\n"
 		patchheader += "Subject: " + h.Subject + "\n\n"
-		_, err1 := file.WriteString(patchheader + patch)
+		_, err1 := file.WriteString(strings.ReplaceAll(patchheader + patch, "\r\n", "\n"))
 		if err1 != nil {
 			log.Println("write file: ", err1)
 			return
 		}
 
-		cmd := exec.Command("fromdos", PATCH_DIR + patchname)
-		cmderr := cmd.Run()
-		if cmderr != nil {
-			log.Println("fromdos: ", cmderr)
-		}
+		//cmd := exec.Command("fromdos", PATCH_DIR + patchname)
+		//cmderr := cmd.Run()
+		//if cmderr != nil {
+		//	log.Println("fromdos: ", cmderr)
+		//}
 		patchlist = append(patchlist, patchname)
 		// checkresult := "--- Test Result ---\n"
 		// checkres:= CheckPatchAll(patchname, ChangedPath)

@@ -10,7 +10,7 @@ Download the golang package (`go1.20.5.linux-amd64.tar.gz`) and execute the foll
 # rm -rf /usr/local/go && tar -C /usr/local -xzf go1.20.5.linux-amd64.tar.gz
 ```
 
-### Install packages for kernel compilation
+<!-- ### Install packages for kernel compilation
 
 ```
 sudo apt-get install build-essential make libncurses5-dev flex libssl-dev libelf-dev bison
@@ -21,7 +21,11 @@ sudo apt-get install build-essential make libncurses5-dev flex libssl-dev libelf
 ```
 sudo apt-get install git sqlite3 libsqlite3-dev
 sudo apt-get install libtry-tiny-perl tofrodos cppcheck ocaml coccinelle
-```
+``` -->
+
+## Configure the config.json file
+
+Fill in the config.json file with sensitive information such as SMTP and IMAP server details, username, password, and a list of email addresses whitelist for filtering.
 
 ## Building
 
