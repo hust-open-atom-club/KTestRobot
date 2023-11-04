@@ -26,7 +26,7 @@ type InputConfig struct {
 	WhiteLists []string `json:"whiteLists"`
 }
 
-type Config struct {
+type MailInfo struct {
 	SMTPServer   string `json:"smtpServer"`
 	SMTPPort     int    `json:"smtpPort"`
 	SMTPUsername string `json:"smtpUsername"`
@@ -40,14 +40,14 @@ type Config struct {
 
 type EmailConfig struct {
 	SMTPServer   string `json:"smtpServer"`
-        SMTPPort     int    `json:"smtpPort"`
-        IMAPServer   string `json:"imapServer"`
-        IMAPPort     int    `json:"imapPort"`
+    SMTPPort     int    `json:"smtpPort"`
+    IMAPServer   string `json:"imapServer"`
+    IMAPPort     int    `json:"imapPort"`
 }
 
 var (
 	flagConfig = flag.String("config", "", "configuration file")
-	flagDebug  = flag.Bool("debug", false, "dump all the logs")
+	//flagDebug  = flag.Bool("debug", false, "dump all the logs")
 )
 
 var PATCH_DIR string
@@ -62,7 +62,7 @@ var patchlist []string
 var LogMessage string
 
 
-func parseInputConfig(configFile string) Config {
+func parseInputConfig(configFile string) MailInfo {
 	var inputConfig InputConfig
 	// open config file
 	configFd, err := os.Open(configFile)
@@ -90,7 +90,7 @@ func parseInputConfig(configFile string) Config {
 	if !ok {
 		log.Fatalf("We don't support domain %s", data[1])
 	}
-	config := Config{
+	mailinfo := MailInfo{
 		emailAccount.SMTPServer,
 		emailAccount.SMTPPort,
 		inputConfig.Username,
@@ -101,7 +101,7 @@ func parseInputConfig(configFile string) Config {
 		inputConfig.Password,
 		inputConfig.WhiteLists,
 	}
-	return config
+	return mailinfo
 }
 
 func main() {
@@ -109,11 +109,11 @@ func main() {
 	if *flagConfig == "" {
 		log.Fatalf("No config file specified")
 	}
-	config := parseInputConfig(*flagConfig)
+	mailinfo := parseInputConfig(*flagConfig)
 	// init the environment of KTestRobot
 	BotInit()
 	for {
-		ReceiveEmail(config)
+		mailinfo.ReceiveEmail();
 		for _, patchname := range patchlist{
 			checkresult := "--- Test Result ---\n"
 			checkres:= CheckPatchAll(patchname, ChangedPath)
@@ -132,7 +132,7 @@ func main() {
 
 			checkresult += checkres
 			toSend := ChangedPath + LogMessage + checkresult
-			SendEmail(config, toSend, emailheader)
+			mailinfo.SendEmail(toSend, emailheader);
 		}
 		patchlist = patchlist[:0]
 		time.Sleep(time.Minute * 20)

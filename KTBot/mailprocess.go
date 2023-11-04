@@ -13,7 +13,7 @@ import (
 	"github.com/emersion/go-message/mail"
 )
 
-func SendEmail(config Config, result string, h EmailHeader) {
+func (mailinfo MailInfo) SendEmail(result string, h EmailHeader) {
 	//if pass all check, just send to patch committer
 	mailtext := "Hi, " + h.FromName + "\n"
 	mailtext += "This email is automatically replied by KTestRobot(Beta). "
@@ -30,18 +30,18 @@ func SendEmail(config Config, result string, h EmailHeader) {
 		"In-Reply-To: " + "<" + h.MessageID + ">" + "\r\n" +
 		"\r\n" +
 		mailtext + "\r\n")
-	auth := smtp.PlainAuth("", config.SMTPUsername, config.SMTPPassword, config.SMTPServer)
-	err := smtp.SendMail(config.SMTPServer + ":" + strconv.Itoa(config.SMTPPort), auth, config.SMTPUsername, to, msg)
+	auth := smtp.PlainAuth("", mailinfo.SMTPUsername, mailinfo.SMTPPassword, mailinfo.SMTPServer)
+	err := smtp.SendMail(mailinfo.SMTPServer + ":" + strconv.Itoa(mailinfo.SMTPPort), auth, mailinfo.SMTPUsername, to, msg)
 	if err != nil {
 		log.Println("SendMail", err)
 	}
 	log.Println("Successfully Send to: ", to)
 }
 
-func ReceiveEmail(config Config) {
+func (mailinfo MailInfo) ReceiveEmail() {
 	log.Println("Connecting to server...")
 	// Connect to server
-	c, err := client.DialTLS(config.IMAPServer + ":" + strconv.Itoa(config.IMAPPort), nil)
+	c, err := client.DialTLS(mailinfo.IMAPServer + ":" + strconv.Itoa(mailinfo.IMAPPort), nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -56,7 +56,7 @@ func ReceiveEmail(config Config) {
 
 	defer c.Logout()
 
-	if err := c.Login(config.IMAPUsername, config.IMAPPassword); err != nil {
+	if err := c.Login(mailinfo.IMAPUsername, mailinfo.IMAPPassword); err != nil {
 		log.Fatal(err)
 	}
 	log.Println("Logged in")
@@ -143,7 +143,7 @@ func ReceiveEmail(config Config) {
 		if cclist, err := header.AddressList("Cc"); err == nil {
 			log.Println("Cc:", cclist)
 			for _, cc := range cclist {
-				if WhiteLists(cc.Address, config) == 1 {
+				if WhiteLists(cc.Address, mailinfo) == 1 {
 					emailheader.Cc = append(emailheader.Cc, cc.Address)
 				} else {
 					ignore = 1
@@ -154,7 +154,7 @@ func ReceiveEmail(config Config) {
 		if to, err := header.AddressList("To"); err == nil {
 			log.Println("To: ", to)
 			for _, cc := range to {
-				if WhiteLists(cc.Address, config) == 1 {
+				if WhiteLists(cc.Address, mailinfo) == 1 {
 					emailheader.Cc = append(emailheader.Cc, cc.Address)
 				} else {
 					ignore = 1
@@ -201,9 +201,9 @@ func ReceiveEmail(config Config) {
 	log.Println("Done!")
 }
 
-func WhiteLists(mailaddr string, config Config) int {
+func WhiteLists(mailaddr string, mailinfo MailInfo) int {
 	var flag = 0
-	for _, suffix := range config.WhiteLists {
+	for _, suffix := range mailinfo.WhiteLists {
 		if strings.Contains(mailaddr, suffix) {
 			flag = 1
 			break
