@@ -1,12 +1,6 @@
 {
-    "smtpServer": "",
-    "smtpPort": ,
-    "smtpUsername": "",
-    "smtpPassword": "",
-    "imapServer": "",
-    "imapPort": ,
-    "imapUsername": "",
-    "imapPassword": "",
+    "username": "",
+    "password": "",
     "whiteLists": [
     ]
 }
