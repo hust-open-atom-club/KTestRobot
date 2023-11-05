@@ -130,3 +130,5 @@ dmypy.json
 
 # project-related
 KTBot/config.json
+KTBot/KTestRobot
+KTBot/smatch
