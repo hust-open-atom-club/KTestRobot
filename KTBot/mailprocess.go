@@ -1,23 +1,24 @@
 package main
 
 import (
-	"log"
-	"strings"
 	"io"
+	"log"
 	"net/smtp"
-	"strconv"
 	"os"
+	"strconv"
+	"strings"
+
 	"github.com/emersion/go-imap"
 	id "github.com/emersion/go-imap-id"
 	"github.com/emersion/go-imap/client"
 	"github.com/emersion/go-message/mail"
 )
 
-func WhiteLists(mailaddr string, mailinfo MailInfo) int {
-	var flag = 0
+func WhiteLists(mailaddr string, mailinfo MailInfo) bool {
+	var flag bool // default is false
 	for _, suffix := range mailinfo.WhiteLists {
 		if strings.Contains(mailaddr, suffix) {
-			flag = 1
+			flag = true
 			break
 		}
 	}
@@ -42,7 +43,7 @@ func (mailinfo MailInfo) SendEmail(toSend string, emailheader EmailHeader) {
 		"\r\n" +
 		mailtext + "\r\n")
 	auth := smtp.PlainAuth("", mailinfo.SMTPUsername, mailinfo.SMTPPassword, mailinfo.SMTPServer)
-	err := smtp.SendMail(mailinfo.SMTPServer + ":" + strconv.Itoa(mailinfo.SMTPPort), auth, mailinfo.SMTPUsername, to, msg)
+	err := smtp.SendMail(mailinfo.SMTPServer+":"+strconv.Itoa(mailinfo.SMTPPort), auth, mailinfo.SMTPUsername, to, msg)
 	if err != nil {
 		log.Println("SendMail", err)
 	}
@@ -52,7 +53,7 @@ func (mailinfo MailInfo) SendEmail(toSend string, emailheader EmailHeader) {
 func (mailinfo MailInfo) ReceiveEmail(KTBot_DIR string) []*mail.Reader {
 	log.Println("Connecting to server...")
 	// Connect to server
-	c, err := client.DialTLS(mailinfo.IMAPServer + ":" + strconv.Itoa(mailinfo.IMAPPort), nil)
+	c, err := client.DialTLS(mailinfo.IMAPServer+":"+strconv.Itoa(mailinfo.IMAPPort), nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -99,7 +100,7 @@ func (mailinfo MailInfo) ReceiveEmail(KTBot_DIR string) []*mail.Reader {
 	seqset.AddRange(from, to)
 	section := &imap.BodySectionName{}
 	items := []imap.FetchItem{imap.FetchEnvelope, imap.FetchFlags, imap.FetchInternalDate, section.FetchItem()}
-	messages := make(chan *imap.Message, to - from + 2)
+	messages := make(chan *imap.Message, to-from+2)
 	done = make(chan error, 1)
 	go func() {
 		done <- c.Fetch(seqset, items, messages)
@@ -111,14 +112,14 @@ func (mailinfo MailInfo) ReceiveEmail(KTBot_DIR string) []*mail.Reader {
 		if !strings.HasPrefix(msg.Envelope.Subject, "[PATCH") {
 			continue
 		}
-		
+
 		section, err := imap.ParseBodySectionName("BODY[]")
 		if err != nil {
 			log.Println("ParseBodySectionName err!")
 			continue
 		}
 		r := msg.GetBody(section)
-		if r == nil { 
+		if r == nil {
 			continue
 		}
 
@@ -132,12 +133,12 @@ func (mailinfo MailInfo) ReceiveEmail(KTBot_DIR string) []*mail.Reader {
 	return reader_list
 }
 
-func (mailinfo MailInfo) MailProcess(mr *mail.Reader, KTBot_DIR string) (toSend string, h EmailHeader)  {
+func (mailinfo MailInfo) MailProcess(mr *mail.Reader, KTBot_DIR string) (toSend string, h EmailHeader) {
 	header := mr.Header
 	var emailheader EmailHeader
 	var patchname string
 	var mailtext string
-	var ignore = 0
+	var ignore bool // default is false
 	if from, err := header.AddressList("From"); err == nil {
 		log.Println("From:", from)
 		name := ""
@@ -163,10 +164,10 @@ func (mailinfo MailInfo) MailProcess(mr *mail.Reader, KTBot_DIR string) (toSend 
 	if cclist, err := header.AddressList("Cc"); err == nil {
 		log.Println("Cc:", cclist)
 		for _, cc := range cclist {
-			if WhiteLists(cc.Address, mailinfo) == 1 {
+			if WhiteLists(cc.Address, mailinfo) {
 				emailheader.Cc = append(emailheader.Cc, cc.Address)
 			} else {
-				ignore = 1
+				ignore = true
 				break
 			}
 		}
@@ -174,15 +175,15 @@ func (mailinfo MailInfo) MailProcess(mr *mail.Reader, KTBot_DIR string) (toSend 
 	if to, err := header.AddressList("To"); err == nil {
 		log.Println("To: ", to)
 		for _, cc := range to {
-			if WhiteLists(cc.Address, mailinfo) == 1 {
+			if WhiteLists(cc.Address, mailinfo) {
 				emailheader.Cc = append(emailheader.Cc, cc.Address)
 			} else {
-				ignore = 1
+				ignore = true
 				break
 			}
 		}
 	}
-	if ignore == 1 {
+	if ignore {
 		log.Println("The email was not sent to internal, ignore.")
 		return
 	}
@@ -199,7 +200,7 @@ func (mailinfo MailInfo) MailProcess(mr *mail.Reader, KTBot_DIR string) (toSend 
 		} else if err != nil {
 			log.Println(err)
 			continue
-		}			
+		}
 		// This is the message's text (can be plain-text or HTML)
 		b, _ := io.ReadAll(p.Body)
 		log.Println("Got text: \n", string(b))
@@ -230,9 +231,9 @@ func (mailinfo MailInfo) MailProcess(mr *mail.Reader, KTBot_DIR string) (toSend 
 		}
 		if MessageEnd > 0 {
 			LogMessage = "\n--- Log Message ---\n"
-			LogMessage += mailtext[:MessageEnd - 1] + "\n"
+			LogMessage += mailtext[:MessageEnd-1] + "\n"
 		}
-		
+
 		var patch string
 		index := strings.Index(mailtext, "You received this message because")
 		if index == -1 {
@@ -249,20 +250,20 @@ func (mailinfo MailInfo) MailProcess(mr *mail.Reader, KTBot_DIR string) (toSend 
 		patchheader := "From: " + emailheader.FromName
 		patchheader += "<" + emailheader.FromAddr + ">\n"
 		patchheader += "Subject: " + emailheader.Subject + "\n\n"
-		_, err1 := file.WriteString(strings.ReplaceAll(patchheader + patch, "\r\n", "\n"))
+		_, err1 := file.WriteString(strings.ReplaceAll(patchheader+patch, "\r\n", "\n"))
 		if err1 != nil {
 			log.Println("write file: ", err1)
 			return
 		}
 
 		checkresult := "--- Test Result ---\n"
-		checkres:= CheckPatchAll(KTBot_DIR, patchname, ChangedPath)
+		checkres := CheckPatchAll(KTBot_DIR, patchname, ChangedPath)
 
-		logname := patchname[:len(patchname) - 6]
+		logname := patchname[:len(patchname)-6]
 		log_file, err2 := os.Create("log/" + logname)
 		if err2 != nil {
-		log.Println("open log_file: ", err2)
-		   return
+			log.Println("open log_file: ", err2)
+			return
 		}
 		defer log_file.Close()
 		_, err3 := log_file.WriteString(checkres)
