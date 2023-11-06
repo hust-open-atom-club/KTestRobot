@@ -13,32 +13,21 @@ import (
 	"github.com/emersion/go-message/mail"
 )
 
-func WhiteLists(mailaddr string, mailinfo MailInfo) int {
-	var flag = 0
-	for _, suffix := range mailinfo.WhiteLists {
-		if strings.Contains(mailaddr, suffix) {
-			flag = 1
-			break
-		}
-	}
-	return flag
-}
-
-func (mailinfo MailInfo) SendEmail(toSend string, emailheader EmailHeader) {
+func (mailinfo MailInfo) SendEmail(result string, h EmailHeader) {
 	//if pass all check, just send to patch committer
-	mailtext := "Hi, " + emailheader.FromName + "\n"
+	mailtext := "Hi, " + h.FromName + "\n"
 	mailtext += "This email is automatically replied by KTestRobot(Beta). "
 	mailtext += "Please do not reply to this email.\n"
 	mailtext += "If you have any questions or suggestions about KTestRobot, "
 	mailtext += "please contact Lishuchang <U202011978@hust.edu.cn>\n\n"
-	mailtext += toSend
+	mailtext += result
 	mailtext += "\n-- \nKTestRobot(Beta)"
 	log.Println("Connecting to smtp server")
-	to := []string{emailheader.FromAddr}
-	msg := []byte("To: " + emailheader.FromAddr + "\r\n" +
-		"Subject: Re: " + emailheader.Subject + "\r\n" +
-		"Cc: " + strings.Join(emailheader.Cc, ";") + "\r\n" +
-		"In-Reply-To: " + "<" + emailheader.MessageID + ">" + "\r\n" +
+	to := []string{h.FromAddr}
+	msg := []byte("To: " + h.FromAddr + "\r\n" +
+		"Subject: Re: " + h.Subject + "\r\n" +
+		"Cc: " + strings.Join(h.Cc, ";") + "\r\n" +
+		"In-Reply-To: " + "<" + h.MessageID + ">" + "\r\n" +
 		"\r\n" +
 		mailtext + "\r\n")
 	auth := smtp.PlainAuth("", mailinfo.SMTPUsername, mailinfo.SMTPPassword, mailinfo.SMTPServer)
@@ -49,7 +38,7 @@ func (mailinfo MailInfo) SendEmail(toSend string, emailheader EmailHeader) {
 	log.Println("Successfully Send to: ", to)
 }
 
-func (mailinfo MailInfo) ReceiveEmail(KTBot_DIR string) {
+func (mailinfo MailInfo) ReceiveEmail() {
 	log.Println("Connecting to server...")
 	// Connect to server
 	c, err := client.DialTLS(mailinfo.IMAPServer + ":" + strconv.Itoa(mailinfo.IMAPPort), nil)
@@ -126,88 +115,108 @@ func (mailinfo MailInfo) ReceiveEmail(KTBot_DIR string) {
 			log.Println("CreateReader fail: ", err)
 			continue
 		}
+		header := mr.Header
+		var patchname string
+		var ignore = 0
+		if from, err := header.AddressList("From"); err == nil {
+			log.Println("From:", from)
+			name := ""
+			if from[0].Name == name {
+				index := strings.Index(from[0].Address, "@")
+				name = from[0].Address[:index]
+			} else {
+				name = from[0].Name
+			}
+			patchname = strings.ReplaceAll(name, " ", "") + "_"
+			emailheader.FromName = name
+			emailheader.FromAddr = from[0].Address
+		}
+		if date, err := header.Date(); err == nil {
+			log.Println("Date: ", date)
+			date = date.Local()
+			patchname += date.Format("20060102150405") + ".patch"
+		}
+		if subject, err := header.Subject(); err == nil {
+			log.Println("Subject:", subject)
+			emailheader.Subject = subject
+		}
+		if cclist, err := header.AddressList("Cc"); err == nil {
+			log.Println("Cc:", cclist)
+			for _, cc := range cclist {
+				if WhiteLists(cc.Address, mailinfo) == 1 {
+					emailheader.Cc = append(emailheader.Cc, cc.Address)
+				} else {
+					ignore = 1
+					break
+				}
+			}
+		}
+		if to, err := header.AddressList("To"); err == nil {
+			log.Println("To: ", to)
+			for _, cc := range to {
+				if WhiteLists(cc.Address, mailinfo) == 1 {
+					emailheader.Cc = append(emailheader.Cc, cc.Address)
+				} else {
+					ignore = 1
+					break
+				}
+			}
+		}
+		if ignore == 1 {
+			log.Println("The email was not sent to internal, ignore.")
+			continue
+		}
+		if msgid, err := header.MessageID(); err == nil {
+			log.Println("MessageID: ", msgid)
+			emailheader.MessageID = msgid
+		}
+		for {
+			p, err := mr.NextPart()
+			if err == io.EOF {
+				break
+			} else if err != nil {
+				// log.Fatal(err)
+				log.Println(err)
+				continue
+			}
 
-		mailinfo.MailProcess(mr, KTBot_DIR)
+			switch h := p.Header.(type) {
+			case *mail.InlineHeader:
+				// This is the message's text (can be plain-text or HTML)
+				b, _ := io.ReadAll(p.Body)
+				log.Println("Got text: \n", string(b))
+				MailProcess(string(b), patchname, emailheader)
+			case *mail.AttachmentHeader:
+				// This is an attachment
+				filename, _ := h.Filename()
+				log.Println("Got attachment: \n", filename)
+			}
+		}
 	}
+
+	if err := <-done; err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("Done!")
 }
 
-func (mailinfo MailInfo) MailProcess(mr *mail.Reader, KTBot_DIR string) {
-	header := mr.Header
-	var emailheader EmailHeader
-	var patchname string
-	var mailtext string
-	var ignore = 0
-	if from, err := header.AddressList("From"); err == nil {
-		log.Println("From:", from)
-		name := ""
-		if from[0].Name == name {
-			index := strings.Index(from[0].Address, "@")
-			name = from[0].Address[:index]
-		} else {
-			name = from[0].Name
-		}
-		patchname = strings.ReplaceAll(name, " ", "") + "_"
-		emailheader.FromName = name
-		emailheader.FromAddr = from[0].Address
-	}
-	if date, err := header.Date(); err == nil {
-		log.Println("Date: ", date)
-		date = date.Local()
-		patchname += date.Format("20060102150405") + ".patch"
-	}
-	if subject, err := header.Subject(); err == nil {
-		log.Println("Subject:", subject)
-		emailheader.Subject = subject
-	}
-	if cclist, err := header.AddressList("Cc"); err == nil {
-		log.Println("Cc:", cclist)
-		for _, cc := range cclist {
-			if WhiteLists(cc.Address, mailinfo) == 1 {
-				emailheader.Cc = append(emailheader.Cc, cc.Address)
-			} else {
-				ignore = 1
-				break
-			}
-		}
-	}
-	if to, err := header.AddressList("To"); err == nil {
-		log.Println("To: ", to)
-		for _, cc := range to {
-			if WhiteLists(cc.Address, mailinfo) == 1 {
-				emailheader.Cc = append(emailheader.Cc, cc.Address)
-			} else {
-				ignore = 1
-				break
-			}
-		}
-	}
-	if ignore == 1 {
-		log.Println("The email was not sent to internal, ignore.")
-		return
-	}
-	if msgid, err := header.MessageID(); err == nil {
-		log.Println("MessageID: ", msgid)
-		emailheader.MessageID = msgid
-	}
-
-	//process the txt of mail
-	for {
-		p, err := mr.NextPart()
-		if err == io.EOF {
+func WhiteLists(mailaddr string, mailinfo MailInfo) int {
+	var flag = 0
+	for _, suffix := range mailinfo.WhiteLists {
+		if strings.Contains(mailaddr, suffix) {
+			flag = 1
 			break
-		} else if err != nil {
-			log.Println(err)
-			continue
-		}			
-		// This is the message's text (can be plain-text or HTML)
-		b, _ := io.ReadAll(p.Body)
-		log.Println("Got text: \n", string(b))
+		}
 	}
+	return flag
+}
 
+func MailProcess(mailtext string, patchname string, h EmailHeader) {
 	mailsplit := strings.Split(mailtext, "\n")
 	var flag int = 0
-	ChangedPath := "--- Changed Paths ---\n"
-	LogMessage := ""
+	ChangedPath = "--- Changed Paths ---\n"
+	LogMessage = ""
 	for _, line := range mailsplit {
 		if strings.HasPrefix(line, "diff --git a") {
 			flag = 1
@@ -245,34 +254,40 @@ func (mailinfo MailInfo) MailProcess(mr *mail.Reader, KTBot_DIR string) {
 			return
 		}
 		defer file.Close()
-		patchheader := "From: " + emailheader.FromName
-		patchheader += "<" + emailheader.FromAddr + ">\n"
-		patchheader += "Subject: " + emailheader.Subject + "\n\n"
+		patchheader := "From: " + h.FromName
+		patchheader += "<" + h.FromAddr + ">\n"
+		patchheader += "Subject: " + h.Subject + "\n\n"
 		_, err1 := file.WriteString(strings.ReplaceAll(patchheader + patch, "\r\n", "\n"))
 		if err1 != nil {
 			log.Println("write file: ", err1)
 			return
 		}
 
-		checkresult := "--- Test Result ---\n"
-		checkres:= CheckPatchAll(KTBot_DIR, patchname, ChangedPath)
+		//cmd := exec.Command("fromdos", PATCH_DIR + patchname)
+		//cmderr := cmd.Run()
+		//if cmderr != nil {
+		//	log.Println("fromdos: ", cmderr)
+		//}
+		patchlist = append(patchlist, patchname)
+		// checkresult := "--- Test Result ---\n"
+		// checkres:= CheckPatchAll(patchname, ChangedPath)
 
-		logname := patchname[:len(patchname) - 6]
-		log_file, err2 := os.Create("log/" + logname)
-		if err2 != nil {
-		log.Println("open log_file: ", err2)
-		   return
-		}
-		defer log_file.Close()
-		_, err3 := log_file.WriteString(checkres)
-		if err3 != nil {
-			log.Println("write log_file: ", err3)
-			return
-		}
+		// logname := patchname[:len(patchname) - 6]
+		// log_file, err2 := os.Create("log/" + logname)
+		// if err2 != nil {
+		// 	log.Println("open log_file: ", err2)
+		// 	return
+		// }
+		// defer log_file.Close()
+		// _, err3 := log_file.WriteString(checkres)
+		// if err3 != nil {
+		// 	log.Println("write log_file: ", err3)
+		// 	return
+		// }
 
-		checkresult += checkres
-		toSend := ChangedPath + LogMessage + checkresult
-		mailinfo.SendEmail(toSend, emailheader)
+		// checkresult += checkres
+		// toSend := ChangedPath + LogMessage + checkresult
+		// SendEmail(toSend, h)
 	} else {
 		log.Println("No Patch in this mail!")
 	}

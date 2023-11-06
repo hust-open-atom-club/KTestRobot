@@ -1,11 +1,6 @@
 {
-    "username": "ktestrobot@126.com",
-    "password": "XNJWPXRXJQYTRDRY",
+    "username": "",
+    "password": "",
     "whiteLists": [
-        "@hust.edu.cn",
-        "hust-os-kernel-patches@googlegroups.com",
-        "dan.carpenter@linaro.org",
-        "error27@gmail.com",
-        "ktestrobot@126.com"
     ]
 }
