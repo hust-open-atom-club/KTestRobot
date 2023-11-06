@@ -49,7 +49,7 @@ func (mailinfo MailInfo) SendEmail(toSend string, emailheader EmailHeader) {
 	log.Println("Successfully Send to: ", to)
 }
 
-func (mailinfo MailInfo) ReceiveEmail(KTBot_DIR string) {
+func (mailinfo MailInfo) ReceiveEmail(KTBot_DIR string) []*mail.Reader {
 	log.Println("Connecting to server...")
 	// Connect to server
 	c, err := client.DialTLS(mailinfo.IMAPServer + ":" + strconv.Itoa(mailinfo.IMAPPort), nil)
@@ -91,7 +91,7 @@ func (mailinfo MailInfo) ReceiveEmail(KTBot_DIR string) {
 	to := mbox.Messages
 	if mbox.Recent == 0 {
 		log.Println("No New Email")
-		return
+		return nil
 	}
 	from = mbox.Messages - mbox.Recent + 1
 
@@ -105,6 +105,7 @@ func (mailinfo MailInfo) ReceiveEmail(KTBot_DIR string) {
 		done <- c.Fetch(seqset, items, messages)
 	}()
 
+	var reader_list []*mail.Reader
 	for msg := range messages {
 		// check subject
 		if !strings.HasPrefix(msg.Envelope.Subject, "[PATCH") {
@@ -126,12 +127,12 @@ func (mailinfo MailInfo) ReceiveEmail(KTBot_DIR string) {
 			log.Println("CreateReader fail: ", err)
 			continue
 		}
-
-		mailinfo.MailProcess(mr, KTBot_DIR)
+		reader_list = append(reader_list, mr)
 	}
+	return reader_list
 }
 
-func (mailinfo MailInfo) MailProcess(mr *mail.Reader, KTBot_DIR string) {
+func (mailinfo MailInfo) MailProcess(mr *mail.Reader, KTBot_DIR string) (toSend string, h EmailHeader)  {
 	header := mr.Header
 	var emailheader EmailHeader
 	var patchname string
@@ -272,8 +273,10 @@ func (mailinfo MailInfo) MailProcess(mr *mail.Reader, KTBot_DIR string) {
 
 		checkresult += checkres
 		toSend := ChangedPath + LogMessage + checkresult
-		mailinfo.SendEmail(toSend, emailheader)
+		return toSend, emailheader
 	} else {
 		log.Println("No Patch in this mail!")
+		var empty EmailHeader
+		return "", empty
 	}
 }

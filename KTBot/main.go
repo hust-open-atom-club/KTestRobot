@@ -111,7 +111,20 @@ func main() {
 	// smatch stores the smatch source code
 	botInit(KTBot_DIR)
 	for {
-		mailinfo.ReceiveEmail(KTBot_DIR)
+		reader_list := mailinfo.ReceiveEmail(KTBot_DIR)
+		if reader_list != nil {
+			for _, mail_reader := range reader_list{
+				toSend, emailheader := mailinfo.MailProcess(mail_reader, KTBot_DIR)
+				if toSend != "" {
+					mailinfo.SendEmail(toSend, emailheader)
+				} else {
+					continue
+				}
+			}
+		} else {
+			continue
+		}
+		
 		time.Sleep(time.Minute * 20)
 	}
 }
