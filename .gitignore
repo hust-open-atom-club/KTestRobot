@@ -132,3 +132,5 @@ dmypy.json
 KTBot/config.json
 KTBot/KTestRobot
 KTBot/smatch
+KTBot/mainline
+KTBot/linux-next
