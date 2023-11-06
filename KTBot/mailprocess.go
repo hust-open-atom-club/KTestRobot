@@ -14,7 +14,7 @@ import (
 	"github.com/emersion/go-message/mail"
 )
 
-func WhiteLists(mailaddr string, mailinfo MailInfo) bool {
+func (mailinfo MailInfo) CheckWhiteLists(mailaddr string) bool {
 	var flag bool // default is false
 	for _, suffix := range mailinfo.WhiteLists {
 		if strings.Contains(mailaddr, suffix) {
@@ -164,7 +164,7 @@ func (mailinfo MailInfo) MailProcess(mr *mail.Reader, KTBot_DIR string) (toSend 
 	if cclist, err := header.AddressList("Cc"); err == nil {
 		log.Println("Cc:", cclist)
 		for _, cc := range cclist {
-			if WhiteLists(cc.Address, mailinfo) {
+			if mailinfo.CheckWhiteLists(cc.Address) {
 				emailheader.Cc = append(emailheader.Cc, cc.Address)
 			} else {
 				ignore = true
@@ -175,7 +175,7 @@ func (mailinfo MailInfo) MailProcess(mr *mail.Reader, KTBot_DIR string) (toSend 
 	if to, err := header.AddressList("To"); err == nil {
 		log.Println("To: ", to)
 		for _, cc := range to {
-			if WhiteLists(cc.Address, mailinfo) {
+			if mailinfo.CheckWhiteLists(cc.Address) {
 				emailheader.Cc = append(emailheader.Cc, cc.Address)
 			} else {
 				ignore = true
