@@ -50,11 +50,6 @@ var (
 	//flagDebug  = flag.Bool("debug", false, "dump all the logs")
 )
 
-var ChangedPath string
-var emailheader EmailHeader
-var patchlist []string
-var LogMessage string
-
 func parseConfig(configFile string) MailInfo {
 	var config Config
 	// open config file
@@ -116,29 +111,7 @@ func main() {
 	// smatch stores the smatch source code
 	botInit(KTBot_DIR)
 	for {
-		mailinfo.ReceiveEmail()
-		for index, patchname := range patchlist {
-			log.Printf("Processing patch %d\n", index)
-			checkresult := "--- Test Result ---\n"
-			checkres := CheckPatchAll(KTBot_DIR, patchname, ChangedPath)
-			logname := patchname[:len(patchname)-6]
-			log_file, err2 := os.Create("log/" + logname)
-			if err2 != nil {
-				log.Println("open log_file: ", err2)
-				return
-			}
-			defer log_file.Close()
-			_, err3 := log_file.WriteString(checkres)
-			if err3 != nil {
-				log.Println("write log_file: ", err3)
-				return
-			}
-
-			checkresult += checkres
-			toSend := ChangedPath + LogMessage + checkresult
-			mailinfo.SendEmail(toSend, emailheader)
-		}
-		patchlist = patchlist[:0]
+		mailinfo.ReceiveEmail(KTBot_DIR)
 		time.Sleep(time.Minute * 20)
 	}
 }
