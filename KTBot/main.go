@@ -99,11 +99,12 @@ func main() {
 		log.Fatalf("No config file specified")
 	}
 	mailinfo := parseConfig(*flagConfig)
+	// get current directory
 	KTBot_DIR, err := os.Getwd()
 	if err != nil {
 		log.Fatal("Failed to get the current directory", err)
 	}
-	// init the environment of KTestRobot
+	// init the running environment of KTestRobot
 	// patch stores the patches received from mailing list
 	// log stores the log file
 	// mainline stores the mainline source code
@@ -111,20 +112,21 @@ func main() {
 	// smatch stores the smatch source code
 	botInit(KTBot_DIR)
 	for {
+		// receive emails from mailing list
 		reader_list := mailinfo.ReceiveEmail(KTBot_DIR)
 		if reader_list != nil {
-			for _, mail_reader := range reader_list{
+			// check all the received new emails and patches
+			for _, mail_reader := range reader_list {
+				// process the email and extract the original email sender and header
 				toSend, emailheader := mailinfo.MailProcess(mail_reader, KTBot_DIR)
 				if toSend != "" {
+					// send feedback emails to the sender
 					mailinfo.SendEmail(toSend, emailheader)
 				} else {
 					continue
 				}
 			}
-		} else {
-			continue
 		}
-		
 		time.Sleep(time.Minute * 20)
 	}
 }
