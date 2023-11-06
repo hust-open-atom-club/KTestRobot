@@ -50,12 +50,6 @@ var (
 	//flagDebug  = flag.Bool("debug", false, "dump all the logs")
 )
 
-var PATCH_DIR string
-var BOOT_DIR string
-var MAINLINE_DIR string
-var LINUX_NEXT_DIR string
-var SMATCH_DIR string
-var KTBot_DIR string
 var ChangedPath string
 var emailheader EmailHeader
 var patchlist []string
@@ -110,13 +104,23 @@ func main() {
 		log.Fatalf("No config file specified")
 	}
 	mailinfo := parseConfig(*flagConfig)
+	KTBot_DIR, err := os.Getwd()
+	if err != nil {
+		log.Fatal("Failed to get the current directory", err)
+	}
 	// init the environment of KTestRobot
-	BotInit()
+	// patch stores the patches received from mailing list
+	// log stores the log file
+	// mainline stores the mainline source code
+	// linux-next stores the linux-next source code
+	// smatch stores the smatch source code
+	botInit(KTBot_DIR)
 	for {
 		mailinfo.ReceiveEmail()
-		for _, patchname := range patchlist {
+		for index, patchname := range patchlist {
+			log.Printf("Processing patch %d\n", index)
 			checkresult := "--- Test Result ---\n"
-			checkres := CheckPatchAll(patchname, ChangedPath)
+			checkres := CheckPatchAll(KTBot_DIR, patchname, ChangedPath)
 			logname := patchname[:len(patchname)-6]
 			log_file, err2 := os.Create("log/" + logname)
 			if err2 != nil {
