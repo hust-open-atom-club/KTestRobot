@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"os/exec"
+	"path/filepath"
 )
 
 func CheckPatchAll(KTBot_DIR string, patchname string, changedpath string) string {
@@ -11,26 +12,18 @@ func CheckPatchAll(KTBot_DIR string, patchname string, changedpath string) strin
 	if checkpatch_err {
 		result += checkpatch
 	}
+	// make this logic more simple
+	// directly try this patch in different branches
+	apply2next_err, apply2next := ApplyPatch(KTBot_DIR, "linux-next", patchname)
+	if apply2next_err {
+		result += apply2next
+	}
+	apply2mainline_err, apply2mainline := ApplyPatch(KTBot_DIR, "mainline", patchname)
+	if apply2mainline_err {
+		result += apply2mainline
+	}
 
-	//default tree is linux-next
-	// branch := "linux-next"
-	// applynext_err, apply2linuxnext := ApplyPatch(branch, patchname)
-	// if applynext_err {
-	// 	result += apply2linuxnext
-	// }
-	// if strings.Contains(apply2linuxnext, "FAILED") {
-	// 	//Apply2Mainline() will change to mainline
-	// 	branch = "mainline"
-	// 	applymain_err, apply2mainline := ApplyPatch(branch, patchname)
-	// 	if applymain_err {
-	// 		result += apply2mainline
-	// 	}
-	// 	if strings.Contains(apply2mainline, "FAILED") {
-	// 		return result
-	// 	}
-	// }
-
-	// //static analysis
+	// static analysis
 	// staticres := StaticAnalysis(branch, patchname, changedpath)
 	// result += staticres
 
@@ -82,32 +75,22 @@ func CheckPatchpl(KTBot_DIR string, patch string) (bool, string) {
 	return true, result
 }
 
-// func ApplyPatch(branch string, patchname string) (bool, string) {
-// 	dir := ""
-// 	b := ""
-// 	switch branch {
-// 	case "mainline":
-// 		b = "Mainline"
-// 		dir = MAINLINE_DIR
-// 	case "linux-next":
-// 		b = "LinuxNext"
-// 		dir = LINUX_NEXT_DIR
-// 	}
-// 	result := "*** ApplyTo" + b + "\tPASS ***\n"
+func ApplyPatch(KTBot_DIR string, branch string, patchname string) (bool, string) {
+	result := "*** ApplyTo" + branch + "\tPASS ***\n"
 
-// 	cmd := exec.Command("git", "apply", "--check", PATCH_DIR+patchname)
-// 	var stderr bytes.Buffer
-// 	// cmd.Stdout = &stdout
-// 	cmd.Stderr = &stderr
-// 	cmd.Dir = dir
-// 	err := cmd.Run()
-// 	errStr := stderr.String()
-// 	if err != nil {
-// 		result = "*** ApplyTo" + b + "\tFAILED ***\n"
-// 		result += errStr + "\n"
-// 	}
-// 	return true, result
-// }
+	cmd := exec.Command("git", "apply", "--check", filepath.Join(KTBot_DIR, "patch", patchname))
+	var stderr bytes.Buffer
+	// cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	cmd.Dir = filepath.Join(KTBot_DIR, branch)
+	err := cmd.Run()
+	errStr := stderr.String()
+	if err != nil {
+		result = "*** ApplyTo" + branch + "\tFAILED ***\n"
+		result += errStr + "\n"
+	}
+	return true, result
+}
 
 // func BugHash(info string) string {
 // 	salt := "KTestRobot"
