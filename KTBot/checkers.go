@@ -7,7 +7,7 @@ import (
 
 func CheckPatchAll(KTBot_DIR string, patchname string, changedpath string) string {
 	var result string
-	checkpatch_err, checkpatch := CheckPatchpl(KTBot_DIR+"mainline", patchname)
+	checkpatch_err, checkpatch := CheckPatchpl(KTBot_DIR, patchname)
 	if checkpatch_err {
 		result += checkpatch
 	}
@@ -67,7 +67,7 @@ func CheckPatchAll(KTBot_DIR string, patchname string, changedpath string) strin
 
 func CheckPatchpl(KTBot_DIR string, patch string) (bool, string) {
 	result := "*** CheckPatch\tPASS ***\n"
-	cmd := exec.Command(KTBot_DIR+"scripts/checkpatch.pl", KTBot_DIR+"/patch/"+patch)
+	cmd := exec.Command(KTBot_DIR+"/mainline/scripts/checkpatch.pl", KTBot_DIR+"/patch/"+patch)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr

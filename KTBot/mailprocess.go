@@ -204,6 +204,7 @@ func (mailinfo MailInfo) MailProcess(mr *mail.Reader, KTBot_DIR string) (toSend 
 		// This is the message's text (can be plain-text or HTML)
 		b, _ := io.ReadAll(p.Body)
 		log.Println("Got text: \n", string(b))
+		mailtext = string(b)
 	}
 
 	mailsplit := strings.Split(mailtext, "\n")
