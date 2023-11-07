@@ -139,6 +139,7 @@ func (mailinfo MailInfo) MailProcess(mr *mail.Reader, KTBot_DIR string) (toSend 
 	var patchname string
 	var mailtext string
 	var ignore bool // default is false
+	var flag bool   // default is false
 	if from, err := header.AddressList("From"); err == nil {
 		log.Println("From:", from)
 		name := ""
@@ -208,12 +209,11 @@ func (mailinfo MailInfo) MailProcess(mr *mail.Reader, KTBot_DIR string) (toSend 
 	}
 
 	mailsplit := strings.Split(mailtext, "\n")
-	var flag int = 0
 	ChangedPath := "--- Changed Paths ---\n"
 	LogMessage := ""
 	for _, line := range mailsplit {
 		if strings.HasPrefix(line, "diff --git a") {
-			flag = 1
+			flag = true
 			subline := line[13:]
 			tempindex := strings.Index(subline, " ")
 			ChangedPath += subline[:tempindex] + "\n"
@@ -222,7 +222,7 @@ func (mailinfo MailInfo) MailProcess(mr *mail.Reader, KTBot_DIR string) (toSend 
 			return
 		}
 	}
-	if flag == 1 {
+	if flag {
 		MessageEnd := strings.Index(mailtext, "Fixes:")
 		if MessageEnd == -1 {
 			MessageEnd = strings.Index(mailtext, "Signed-off-by:")

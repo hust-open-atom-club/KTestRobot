@@ -118,6 +118,7 @@ func main() {
 			// check all the received new emails and patches
 			for _, mail_reader := range reader_list {
 				// process the email and extract the original email sender and header
+				// in this process, call checkers on the patch to check many aspects
 				toSend, emailheader := mailinfo.MailProcess(mail_reader, KTBot_DIR)
 				if toSend != "" {
 					// send feedback emails to the sender
