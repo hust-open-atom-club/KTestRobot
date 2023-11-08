@@ -14,11 +14,11 @@ func CheckPatchAll(KTBot_DIR string, patchname string, changedpath string) strin
 	}
 	// make this logic more simple
 	// directly try this patch in different branches
-	apply2next_err, apply2next := ApplyPatch(KTBot_DIR, "linux-next", patchname)
+	apply2next_err, apply2next := ApplyPatch(KTBot_DIR, "linux-next", patchname, changedpath[22:len(changedpath)-1])
 	if apply2next_err {
 		result += apply2next
 	}
-	apply2mainline_err, apply2mainline := ApplyPatch(KTBot_DIR, "mainline", patchname)
+	apply2mainline_err, apply2mainline := ApplyPatch(KTBot_DIR, "mainline", patchname, changedpath[22:len(changedpath)-1])
 	if apply2mainline_err {
 		result += apply2mainline
 	}
@@ -75,10 +75,10 @@ func CheckPatchpl(KTBot_DIR string, patch string) (bool, string) {
 	return true, result
 }
 
-func ApplyPatch(KTBot_DIR string, branch string, patchname string) (bool, string) {
+func ApplyPatch(KTBot_DIR string, branch string, patchname string, changedpath string) (bool, string) {
 	result := "*** ApplyTo" + branch + "\tPASS ***\n"
 
-	cmd := exec.Command("git", "apply", "--check", filepath.Join(KTBot_DIR, "patch", patchname))
+	cmd := exec.Command("patch", "-p1", "-f", filepath.Join(KTBot_DIR, branch, changedpath), filepath.Join(KTBot_DIR, "patch", patchname))
 	var stderr bytes.Buffer
 	// cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
