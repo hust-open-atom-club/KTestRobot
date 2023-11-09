@@ -41,9 +41,12 @@ func CheckPatchAll(KTBot_DIR string, patchname string, changedpath string) strin
 	return result
 }
 
-func BuildCheck(KTBot_DIR string) (bool, string) {
+func BuildCheck(Dir string) (bool, string) {
 	result := "*** BuildCheck\tPASS ***\n"
 	cmd := exec.Command("make", "-j20")
+	if Dir != "" {
+		cmd.Dir = Dir
+	}
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
