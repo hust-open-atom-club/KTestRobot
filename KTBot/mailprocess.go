@@ -36,7 +36,7 @@ func (mailinfo MailInfo) SendEmail(toSend string, emailheader EmailHeader) {
 	mailtext += "\n-- \nKTestRobot(Beta)"
 	log.Println("Connecting to smtp server")
 	to := []string{emailheader.FromAddr}
-	to = append(to, "hust-os-kernel-patches@googlegroups.com")
+	to = append(to, "kernel_testing_robot@googlegroups.com")
 	msg := []byte("To: " + emailheader.FromAddr + "\r\n" +
 		"Subject: Re: " + emailheader.Subject + "\r\n" +
 		"Cc: " + strings.Join(emailheader.Cc, ";") + "\r\n" +

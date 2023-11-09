@@ -110,7 +110,7 @@ func update(KTBot_DIR string) bool {
 		log.Fatalf("Update mainline failed: %v", err)
 	}
 	linux_next_url := "https://mirrors.hust.college/git/linux-next.git"
-	err = RunCommand(KTBot_DIR + "linux-next", "git", "pull", linux_next_url)
+	err = RunCommand(KTBot_DIR + "/linux-next", "git", "pull", linux_next_url)
 	if err != nil {
 		log.Fatalf("Update linux_next failed: %v", err)
 	}
