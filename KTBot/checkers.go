@@ -41,6 +41,23 @@ func CheckPatchAll(KTBot_DIR string, patchname string, changedpath string) strin
 	return result
 }
 
+func BuildCheck(KTBot_DIR string) (bool, string) {
+	result := "*** BuildCheck\tPASS ***\n"
+	cmd := exec.Command("make", "-j20")
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	errStr := stderr.String()
+	outStr := stdout.String()
+	if err != nil {
+		result = "*** BuildCheck\tFAILED ***\n"
+		res := outStr + "\n" + errStr + "\n"
+		result += res
+	}
+	return true, result
+}
+
 // func StaticAnalysis(branch string, patchname string, changedpath string) string {
 // 	result := ""
 // 	smatch_err, checksmatch := CheckSmatch(branch, patchname, changedpath)
