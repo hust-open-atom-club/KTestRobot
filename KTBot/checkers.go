@@ -47,15 +47,13 @@ func BuildCheck(Dir string) (bool, string) {
 	if Dir != "" {
 		cmd.Dir = Dir
 	}
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
+	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	err := cmd.Run()
 	errStr := stderr.String()
-	outStr := stdout.String()
 	if err != nil {
 		result = "*** BuildCheck\tFAILED ***\n"
-		res := outStr + "\n" + errStr + "\n"
+		res := errStr + "\n"
 		result += res
 	}
 	return true, result
