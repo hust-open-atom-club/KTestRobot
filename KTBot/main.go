@@ -115,6 +115,7 @@ func main() {
 		// receive emails from mailing list
 		reader_list := mailinfo.ReceiveEmail(KTBot_DIR)
 		if reader_list != nil {
+			update(KTBot_DIR)
 			// check all the received new emails and patches
 			for _, mail_reader := range reader_list {
 				// process the email and extract the original email sender and header

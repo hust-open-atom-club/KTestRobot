@@ -31,45 +31,43 @@ func botInit(KTBot_DIR string) bool {
 	// download mainline if not provided
 	err := RunCommand(KTBot_DIR, "ls", "-l", "mainline")
 	if err != nil {
-		mainline_url := "https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/snapshot/linux-master.tar.gz"
-		err = RunCommand(KTBot_DIR, "wget", mainline_url)
+		mainline_url := "https://mirrors.hust.college/git/linux.git"
+		err = RunCommand(KTBot_DIR, "git", "clone", mainline_url)
 		if err != nil {
 			log.Fatalf("Download mainline failed: %v", err)
 		}
-		err = RunCommand(KTBot_DIR, "tar", "zxvf", "linux-master.tar.gz")
-		if err != nil {
-			log.Fatalf("Decompress mainline failed: %v", err)
-		}
-		err = RunCommand(KTBot_DIR, "rm", "-rf", "linux-master.tar.gz")
-		if err != nil {
-			log.Fatalf("Delete mainline.tar.gz failed: %v", err)
-		}
-		err = RunCommand(KTBot_DIR, "mv", "linux-master", "mainline")
+		err = RunCommand(KTBot_DIR, "mv", "linux", "mainline")
 		if err != nil {
 			log.Fatalf("Remove filename failed: %v", err)
 		}
+		err = RunCommand(KTBot_DIR + "/mainline", "make", "allyesconfig")
+		if err != nil {
+			log.Fatalf("Failed to configure config: %v", err)
+		}
+		err = RunCommand(KTBot_DIR + "/mainline", "make", "-j20")
+		if err != nil {
+			log.Fatalf("Compilation failed: %v", err)
+		}
+		
 	}
 
 	// download linux-next if not provided
 	err = RunCommand(KTBot_DIR, "ls", "-l", "linux-next")
 	if err != nil {
-		linux_next_url := "https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/snapshot/linux-next-master.tar.gz"
-		err = RunCommand(KTBot_DIR, "wget", linux_next_url)
+		linux_next_url := "https://mirrors.hust.college/git/linux-next.git"
+		err = RunCommand(KTBot_DIR, "git", "clone", linux_next_url)
 		if err != nil {
 			log.Fatalf("Download linux_next failed: %v", err)
 		}
-		err = RunCommand(KTBot_DIR, "tar", "zxvf", "linux-next-master.tar.gz")
+		err = RunCommand(KTBot_DIR + "/linux-next", "make", "allyesconfig")
 		if err != nil {
-			log.Fatalf("Decompress linux_next failed: %v", err)
+			log.Fatalf("Failed to configure config: %v", err)
 		}
-		err = RunCommand(KTBot_DIR, "rm", "-rf", "linux-next-master.tar.gz")
+		err = RunCommand(KTBot_DIR + "/linux-next", "make", "-j20")
 		if err != nil {
-			log.Fatalf("Delete linux_next.tar.gz failed: %v", err)
+			log.Fatalf("Compilation failed: %v", err)
 		}
-		err = RunCommand(KTBot_DIR, "mv", "linux-next-master", "linux-next")
-		if err != nil {
-			log.Fatalf("Remove filename failed: %v", err)
-		}
+		
 	}
 
 	// clone smatch and compile
@@ -101,5 +99,25 @@ func botInit(KTBot_DIR string) bool {
 	// }
 
 	log.Println("The initializtion of Kernel Testing Robot is done!")
+	return true
+}
+
+func update(KTBot_DIR string) bool {
+	log.Println("Kernel Testing Robot is updating......")
+	mainline_url := "https://mirrors.hust.college/git/linux.git"
+	err := RunCommand(KTBot_DIR + "/mainline", "git", "pull", mainline_url)
+	if err != nil {
+		log.Fatalf("Update mainline failed: %v", err)
+	}
+	linux_next_url := "https://mirrors.hust.college/git/linux-next.git"
+	err = RunCommand(KTBot_DIR + "linux-next", "git", "pull", linux_next_url)
+	if err != nil {
+		log.Fatalf("Update linux_next failed: %v", err)
+	}
+	smatch_url := "git://repo.or.cz/smatch.git"
+	err = RunCommand(KTBot_DIR + "/smatch", "git", "pull", smatch_url)
+	if err != nil {
+		log.Fatalf("smatch update failed: %v", err)
+	}
 	return true
 }
