@@ -14,6 +14,7 @@ func CheckPatchAll(KTBot_DIR string, patchname string, changedpath string) strin
 	var result string
 	checkpatch_pass, checkpatch := CheckPatchpl(KTBot_DIR, patchname)
 	result += checkpatch
+	log.Println("checkpatch done.")
 	if checkpatch_pass {
 		// make this logic more simple
 		// directly try this patch in different branches
@@ -21,29 +22,35 @@ func CheckPatchAll(KTBot_DIR string, patchname string, changedpath string) strin
 		result += apply2next
 		apply2mainline_pass, apply2mainline := ApplyPatch(KTBot_DIR, "mainline", patchname)
 		result += apply2mainline
-
+		log.Println("ApplyPatch check done.")
 		//build check and static analysis
 		if apply2next_pass && apply2mainline_pass {
 			buildcheck_pass, buildcheck := BuildCheck(filepath.Join(KTBot_DIR, "linux-next"))
 			result += buildcheck
+			log.Println("BuildCheck done.")
 			if buildcheck_pass {
 				staticres := StaticAnalysis(KTBot_DIR, "linux-next", patchname, changedpath)
 				result += staticres
+				log.Println("StaticAnalysis done.")
 			}
 		} else if apply2next_pass || apply2mainline_pass {
 			if apply2next_pass {
 				buildcheck_pass, buildcheck := BuildCheck(filepath.Join(KTBot_DIR, "linux-next"))
 				result += buildcheck
+				log.Println("BuildCheck done.")
 				if buildcheck_pass {
 				 	staticres:= StaticAnalysis(KTBot_DIR, "linux-next", patchname, changedpath)
 					result += staticres
+					log.Println("StaticAnalysis done.")
 				}
 			} else {
 				buildcheck_pass, buildcheck := BuildCheck(filepath.Join(KTBot_DIR, "mainline"))
 				result += buildcheck
+				log.Println("BuildCheck done.")
 				if buildcheck_pass {
 				 	staticres:= StaticAnalysis(KTBot_DIR, "mainline", patchname, changedpath)
 					result += staticres
+					log.Println("StaticAnalysis done.")
 				}
 			}
 		}
