@@ -139,6 +139,7 @@ func (mailinfo MailInfo) MailProcess(mr *mail.Reader, KTBot_DIR string) (toSend 
 	var emailheader EmailHeader
 	var patchname string
 	var mailtext string
+	var changed_path string
 	var ignore bool // default is false
 	var flag bool   // default is false
 	if from, err := header.AddressList("From"); err == nil {
@@ -217,6 +218,7 @@ func (mailinfo MailInfo) MailProcess(mr *mail.Reader, KTBot_DIR string) (toSend 
 			flag = true
 			subline := line[13:]
 			tempindex := strings.Index(subline, " ")
+			changed_path = subline[:tempindex]
 			ChangedPath += subline[:tempindex] + "\n"
 		} else if strings.HasPrefix(line, "Reviewed-by:") {
 			log.Println("The patch has Reviewed-by tag.")
@@ -259,7 +261,7 @@ func (mailinfo MailInfo) MailProcess(mr *mail.Reader, KTBot_DIR string) (toSend 
 		}
 
 		checkresult := "--- Test Result ---\n"
-		checkres := CheckPatchAll(KTBot_DIR, patchname)
+		checkres := CheckPatchAll(KTBot_DIR, patchname, changed_path)
 
 		logname := patchname[:len(patchname)-6]
 		log_file, err2 := os.Create("log/" + logname)
