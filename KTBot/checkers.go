@@ -12,52 +12,55 @@ import (
 
 func CheckPatchAll(KTBot_DIR string, patchname string, changedpath string) string {
 	var result string
-	checkpatch_err, checkpatch := CheckPatchpl(KTBot_DIR, patchname)
-	if checkpatch_err {
-		result += checkpatch
-	}
-	// make this logic more simple
-	// directly try this patch in different branches
-	apply2next_err, apply2next := ApplyPatch(KTBot_DIR, "linux-next", patchname)
-	result += apply2next
-	apply2mainline_err, apply2mainline := ApplyPatch(KTBot_DIR, "mainline", patchname)
-	result += apply2mainline
+	checkpatch_pass, checkpatch := CheckPatchpl(KTBot_DIR, patchname)
+	result += checkpatch
+	if checkpatch_pass {
+		// make this logic more simple
+		// directly try this patch in different branches
+		apply2next_pass, apply2next := ApplyPatch(KTBot_DIR, "linux-next", patchname)
+		result += apply2next
+		apply2mainline_pass, apply2mainline := ApplyPatch(KTBot_DIR, "mainline", patchname)
+		result += apply2mainline
 
-	//build check and static analysis
-	if !apply2next_err && !apply2mainline_err {
-		buildcheck := BuildCheck(filepath.Join(KTBot_DIR, "linux-next"))
-		result += buildcheck
-		staticres := StaticAnalysis(KTBot_DIR, "linux-next", patchname, changedpath)
-		result += staticres
-	} else if !apply2next_err || !apply2mainline_err {
-		if !apply2next_err {
-			buildcheck := BuildCheck(filepath.Join(KTBot_DIR, "linux-next"))
+		//build check and static analysis
+		if apply2next_pass && apply2mainline_pass {
+			buildcheck_pass, buildcheck := BuildCheck(filepath.Join(KTBot_DIR, "linux-next"))
 			result += buildcheck
-			staticres := StaticAnalysis(KTBot_DIR, "linux-next", patchname, changedpath)
-			result += staticres
-		} else {
-			buildcheck := BuildCheck(filepath.Join(KTBot_DIR, "mainline"))
-			result += buildcheck
-			staticres := StaticAnalysis(KTBot_DIR, "mainline", patchname, changedpath)
-			result += staticres
+			if buildcheck_pass {
+				staticres := StaticAnalysis(KTBot_DIR, "linux-next", patchname, changedpath)
+				result += staticres
+			}
+		} else if apply2next_pass || apply2mainline_pass {
+			if apply2next_pass {
+				buildcheck_pass, buildcheck := BuildCheck(filepath.Join(KTBot_DIR, "linux-next"))
+				result += buildcheck
+				if buildcheck_pass {
+				 	staticres:= StaticAnalysis(KTBot_DIR, "linux-next", patchname, changedpath)
+					result += staticres
+				}
+			} else {
+				buildcheck_pass, buildcheck := BuildCheck(filepath.Join(KTBot_DIR, "mainline"))
+				result += buildcheck
+				if buildcheck_pass {
+				 	staticres:= StaticAnalysis(KTBot_DIR, "mainline", patchname, changedpath)
+					result += staticres
+				}
+			}
 		}
 	}
 
-	/* build and boot
-	builderr, build := BuildTest(branch, patchname)
-	if builderr {
-		result += build
+	/* boot
 		booterr, boot := BootTest()
 		if booterr {
 			result += boot
 		}
-	}
 	*/
 
 	return result
 }
 
-func BuildCheck(Dir string) string {
+func BuildCheck(Dir string) (bool, string) {
+	flag := true
 	result := "*** BuildCheck\tPASS ***\n"
 	cmd := exec.Command("make", "-j20")
 	if Dir != "" {
@@ -68,11 +71,12 @@ func BuildCheck(Dir string) string {
 	err := cmd.Run()
 	errStr := stderr.String()
 	if err != nil {
+		flag = false
 		result = "*** BuildCheck\tFAILED ***\n"
 		res := errStr + "\n"
 		result += res
 	}
-	return result
+	return flag, result
 }
 
 func StaticAnalysis(KTBot_DIR string, branch string, patchname string, changedpath string) string {
@@ -93,6 +97,7 @@ func StaticAnalysis(KTBot_DIR string, branch string, patchname string, changedpa
 }
 
 func CheckPatchpl(KTBot_DIR string, patch string) (bool, string) {
+	flag := true
 	result := "*** CheckPatch\tPASS ***\n"
 	cmd := exec.Command(KTBot_DIR + "/mainline/scripts/checkpatch.pl", KTBot_DIR + "/patch/" + patch)
 	var stdout, stderr bytes.Buffer
@@ -102,16 +107,17 @@ func CheckPatchpl(KTBot_DIR string, patch string) (bool, string) {
 	errStr := stderr.String()
 	outStr := stdout.String()
 	if err != nil {
+		flag = false
 		result = "*** CheckPatch\tFAILED ***\n"
 		res := outStr + "\n" + errStr + "\n"
 		result += res
 	}
-	return true, result
+	return flag, result
 }
 
 func ApplyPatch(KTBot_DIR string, branch string, patchname string) (bool, string) {
+	flag := true
 	result := "*** ApplyTo" + branch + "\tPASS ***\n"
-
 	cmd := exec.Command("git", "apply", "--check", filepath.Join(KTBot_DIR, "patch", patchname))
 	var stderr bytes.Buffer
 	// cmd.Stdout = &stdout
@@ -120,10 +126,11 @@ func ApplyPatch(KTBot_DIR string, branch string, patchname string) (bool, string
 	err := cmd.Run()
 	errStr := stderr.String()
 	if err != nil {
+		flag = false
 		result = "*** ApplyTo" + branch + "\tFAILED ***\n"
 		result += errStr + "\n"
 	}
-	return true, result
+	return flag, result
 }
 
 func BugHash(info string) string {
