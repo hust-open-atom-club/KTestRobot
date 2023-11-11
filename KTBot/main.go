@@ -22,6 +22,8 @@ type Config struct {
 	Username string `json:"username"`
 	// Password used to log in
 	Password string `json:"password"`
+	// Number of processes required to compile the kernel
+	Procs 	 string `json:"procs"`
 	// whitelist only to be processed
 	WhiteLists []string `json:"whiteLists"`
 }
@@ -36,6 +38,7 @@ type MailInfo struct {
 	IMAPUsername string   `json:"imapUsername"`
 	IMAPPassword string   `json:"imapPassword"`
 	WhiteLists   []string `json:"whiteLists"`
+	Procs 		 string   `json:"procs"`
 }
 
 type EmailConfig struct {
@@ -89,6 +92,7 @@ func parseConfig(configFile string) MailInfo {
 		config.Username,
 		config.Password,
 		config.WhiteLists,
+		config.Procs,
 	}
 	return mailinfo
 }
@@ -110,7 +114,7 @@ func main() {
 	// mainline stores the mainline source code
 	// linux-next stores the linux-next source code
 	// smatch stores the smatch source code
-	botInit(KTBot_DIR)
+	mailinfo.botInit(KTBot_DIR)
 	for {
 		// receive emails from mailing list
 		reader_list := mailinfo.ReceiveEmail(KTBot_DIR)

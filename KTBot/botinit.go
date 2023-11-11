@@ -21,7 +21,7 @@ func RunCommand(Dir string, command string, args ...string) error {
 	return err
 }
 
-func botInit(KTBot_DIR string) bool {
+func (mailinfo MailInfo) botInit(KTBot_DIR string) bool {
 	log.Println("Kernel Testing Robot is initializing......")
 
 	os.MkdirAll("./patch", 0777)
@@ -63,7 +63,7 @@ func botInit(KTBot_DIR string) bool {
 		if err != nil {
 			log.Fatalf("Failed to configure config: %v", err)
 		}
-		err = RunCommand(KTBot_DIR + "/linux-next", "make", "-j20")
+		err = RunCommand(KTBot_DIR + "/linux-next", "make", "-j" + mailinfo.Procs)
 		if err != nil {
 			log.Fatalf("Compilation failed: %v", err)
 		}
