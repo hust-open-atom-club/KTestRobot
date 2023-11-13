@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"path/filepath"
 )
 
 // TODO: execute the command in the current directory
@@ -40,11 +41,11 @@ func (mailinfo MailInfo) botInit(KTBot_DIR string) bool {
 		if err != nil {
 			log.Fatalf("Remove filename failed: %v", err)
 		}
-		err = RunCommand(KTBot_DIR + "/mainline", "make", "allyesconfig")
+		err = RunCommand(filepath.Join(KTBot_DIR, "mainline"), "make", "allyesconfig")
 		if err != nil {
 			log.Fatalf("Failed to configure config: %v", err)
 		}
-		err = RunCommand(KTBot_DIR + "/mainline", "make", "-j20")
+		err = RunCommand(filepath.Join(KTBot_DIR, "mainline"), "make", "-j20")
 		if err != nil {
 			log.Fatalf("Compilation failed: %v", err)
 		}
@@ -59,11 +60,11 @@ func (mailinfo MailInfo) botInit(KTBot_DIR string) bool {
 		if err != nil {
 			log.Fatalf("Download linux_next failed: %v", err)
 		}
-		err = RunCommand(KTBot_DIR + "/linux-next", "make", "allyesconfig")
+		err = RunCommand(filepath.Join(KTBot_DIR, "linux-next"), "make", "allyesconfig")
 		if err != nil {
 			log.Fatalf("Failed to configure config: %v", err)
 		}
-		err = RunCommand(KTBot_DIR + "/linux-next", "make", "-j" + mailinfo.Procs)
+		err = RunCommand(filepath.Join(KTBot_DIR, "linux-next"), "make", "-j" + mailinfo.Procs)
 		if err != nil {
 			log.Fatalf("Compilation failed: %v", err)
 		}
@@ -78,7 +79,7 @@ func (mailinfo MailInfo) botInit(KTBot_DIR string) bool {
 			log.Fatalf("smatch clone failed: %v", err)
 		}
 
-		err = RunCommand(KTBot_DIR+"/smatch", "make")
+		err = RunCommand(filepath.Join(KTBot_DIR, "smatch"), "make")
 		if err != nil {
 			log.Fatalf("smatch make failed: %v", err)
 		}
@@ -104,15 +105,15 @@ func (mailinfo MailInfo) botInit(KTBot_DIR string) bool {
 
 func update(KTBot_DIR string) bool {
 	log.Println("Kernel Testing Robot is updating......")
-	err := RunCommand(KTBot_DIR + "/mainline", "git", "pull")
+	err := RunCommand(filepath.Join(KTBot_DIR, "mainline"), "git", "pull")
 	if err != nil {
 		log.Fatalf("Update mainline failed: %v", err)
 	}
-	err = RunCommand(KTBot_DIR + "/linux-next", "git", "pull")
+	err = RunCommand(filepath.Join(KTBot_DIR, "linux-next"), "git", "pull")
 	if err != nil {
 		log.Fatalf("Update linux_next failed: %v", err)
 	}
-	err = RunCommand(KTBot_DIR + "/smatch", "git", "pull")
+	err = RunCommand(filepath.Join(KTBot_DIR, "smatch"), "git", "pull")
 	if err != nil {
 		log.Fatalf("smatch update failed: %v", err)
 	}

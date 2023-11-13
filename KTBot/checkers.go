@@ -106,7 +106,7 @@ func StaticAnalysis(KTBot_DIR string, branch string, patchname string, changedpa
 func CheckPatchpl(KTBot_DIR string, patch string) (bool, string) {
 	flag := true
 	result := "*** CheckPatch\tPASS ***\n"
-	cmd := exec.Command(KTBot_DIR + "/mainline/scripts/checkpatch.pl", KTBot_DIR + "/patch/" + patch)
+	cmd := exec.Command(filepath.Join(KTBot_DIR, "mainline", "scripts", "checkpatch.pl"), filepath.Join(KTBot_DIR, "patch", patch))
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -148,13 +148,13 @@ func BugHash(info string) string {
 }
 
 func CheckCocci(KTBot_DIR string, branch string, patchname string, changedpath string) (bool, string) {
-	patch := KTBot_DIR + "/patch/" + patchname
+	patch := filepath.Join(KTBot_DIR, "patch", patchname)
 	dir := ""
 	switch branch {
 	case "mainline":
-		dir = KTBot_DIR + "/mainline"
+		dir = filepath.Join(KTBot_DIR, "mainline")
 	case "linux-next":
-		dir = KTBot_DIR + "/linux-next"
+		dir = filepath.Join(KTBot_DIR, "linux-next")
 	}
 	result := "*** CheckCocci\tPASS ***\n"
 	flag := 0
@@ -266,13 +266,13 @@ func Logcmp(pre string, after string, swarn string, serr string) ([]string, []st
 }
 
 func CheckCppcheck(KTBot_DIR string, branch string, patchname string, changedpath string) (bool, string) {
-	patch := KTBot_DIR + "/patch/" + patchname
+	patch := filepath.Join(KTBot_DIR, "patch", patchname)
 	dir := ""
 	switch branch {
 	case "mainline":
-		dir = KTBot_DIR + "/mainline"
+		dir = filepath.Join(KTBot_DIR, "mainline")
 	case "linux-next":
-		dir = KTBot_DIR + "/linux-next"
+		dir = filepath.Join(KTBot_DIR, "linux-next")
 	}
 	paths := strings.Split(changedpath, "\n")
 	result := "*** CheckCppcheck\tPASS ***\n"
@@ -349,13 +349,13 @@ func Find(slice []string, val string) (int, bool) {
 }
 
 func CheckSmatch(KTBot_DIR string, branch string, patchname string, changedpath string) (bool, string) {
-    patch := KTBot_DIR + "/patch/" + patchname
+    patch := filepath.Join(KTBot_DIR, "patch", patchname)
 	dir := ""
 	switch branch {
 	case "mainline":
-		dir = KTBot_DIR + "/mainline"
+		dir = filepath.Join(KTBot_DIR, "mainline")
 	case "linux-next":
-		dir = KTBot_DIR + "/linux-next"
+		dir = filepath.Join(KTBot_DIR, "linux-next")
 	}
 
     result := "*** CheckSmatch\tPASS ***\n"
@@ -366,7 +366,7 @@ func CheckSmatch(KTBot_DIR string, branch string, patchname string, changedpath 
             continue
         }
 
-        precheck := exec.Command(KTBot_DIR + "/smatch/smatch_scripts/kchecker", path)
+        precheck := exec.Command(filepath.Join(KTBot_DIR, "smatch", "smatch_scripts", "kchecker"), path)
         precheck.Dir = dir
         var stdout, stderr bytes.Buffer
         precheck.Stdout = &stdout
@@ -379,7 +379,7 @@ func CheckSmatch(KTBot_DIR string, branch string, patchname string, changedpath 
         apply.Dir = dir
         apply.Run()
 
-        checkagain := exec.Command(KTBot_DIR + "/smatch/smatch_scripts/kchecker", path)
+        checkagain := exec.Command(filepath.Join(KTBot_DIR, "smatch", "smatch_scripts", "kchecker"), path)
         checkagain.Dir = dir
         var stdout1, stderr1 bytes.Buffer
         checkagain.Stdout = &stdout1

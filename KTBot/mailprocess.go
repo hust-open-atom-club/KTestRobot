@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"path/filepath"
 
 	"github.com/emersion/go-imap"
 	id "github.com/emersion/go-imap-id"
@@ -245,7 +246,7 @@ func (mailinfo MailInfo) MailProcess(mr *mail.Reader, KTBot_DIR string) (toSend 
 		} else {
 			patch = mailtext[:index-5]
 		}
-		file, err := os.Create("patch/" + patchname)
+		file, err := os.Create(filepath.Join("patch", patchname))
 		if err != nil {
 			log.Println("openfile: ", err)
 			return
@@ -264,7 +265,7 @@ func (mailinfo MailInfo) MailProcess(mr *mail.Reader, KTBot_DIR string) (toSend 
 		checkres := CheckPatchAll(KTBot_DIR, patchname, changed_path)
 
 		logname := patchname[:len(patchname)-6]
-		log_file, err2 := os.Create("log/" + logname)
+		log_file, err2 := os.Create(filepath.Join("log", logname))
 		if err2 != nil {
 			log.Println("open log_file: ", err2)
 			return
