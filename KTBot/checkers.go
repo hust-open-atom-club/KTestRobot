@@ -68,7 +68,7 @@ func CheckPatchAll(KTBot_DIR string, patchname string, changedpath string) strin
 
 func BuildCheck(Dir string) (bool, string) {
 	flag := true
-	result := "*** BuildCheck\tPASS ***\n"
+	result := "*** BuildCheck          PASS ***\n"
 	cmd := exec.Command("make", "-j20")
 	if Dir != "" {
 		cmd.Dir = Dir
@@ -79,7 +79,7 @@ func BuildCheck(Dir string) (bool, string) {
 	errStr := stderr.String()
 	if err != nil {
 		flag = false
-		result = "*** BuildCheck\tFAILED ***\n"
+		result = "*** BuildCheck          FAILED ***\n"
 		res := errStr + "\n"
 		result += res
 	}
@@ -105,7 +105,7 @@ func StaticAnalysis(KTBot_DIR string, branch string, patchname string, changedpa
 
 func CheckPatchpl(KTBot_DIR string, patch string) (bool, string) {
 	flag := true
-	result := "*** CheckPatch\tPASS ***\n"
+	result := "*** CheckPatch          PASS ***\n"
 	cmd := exec.Command(filepath.Join(KTBot_DIR, "mainline", "scripts", "checkpatch.pl"), filepath.Join(KTBot_DIR, "patch", patch))
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
@@ -115,7 +115,7 @@ func CheckPatchpl(KTBot_DIR string, patch string) (bool, string) {
 	outStr := stdout.String()
 	if err != nil {
 		flag = false
-		result = "*** CheckPatch\tFAILED ***\n"
+		result = "*** CheckPatch          FAILED ***\n"
 		res := outStr + "\n" + errStr + "\n"
 		result += res
 	}
@@ -156,7 +156,7 @@ func CheckCocci(KTBot_DIR string, branch string, patchname string, changedpath s
 	case "linux-next":
 		dir = filepath.Join(KTBot_DIR, "linux-next")
 	}
-	result := "*** CheckCocci\tPASS ***\n"
+	result := "*** CheckCocci          PASS ***\n"
 	flag := 0
 	paths := strings.Split(changedpath, "\n")
 	for _, path := range paths {
@@ -198,7 +198,7 @@ func CheckCocci(KTBot_DIR string, branch string, patchname string, changedpath s
 		if len(new_error) != 0 || len(new_warning) != 0 {
 			if flag == 0 {
 				flag = 1
-				result = "*** CheckCocci\tFAILED ***\n"
+				result = "*** CheckCocci          FAILED ***\n"
 			}
 
 			if len(new_error) != 0 {
@@ -358,7 +358,7 @@ func CheckSmatch(KTBot_DIR string, branch string, patchname string, changedpath 
 		dir = filepath.Join(KTBot_DIR, "linux-next")
 	}
 
-    result := "*** CheckSmatch\tPASS ***\n"
+    result := "*** CheckSmatch         PASS ***\n"
     flag := 0
     paths := strings.Split(changedpath, "\n")
     for _, path := range paths {
@@ -396,7 +396,7 @@ func CheckSmatch(KTBot_DIR string, branch string, patchname string, changedpath 
 		if len(new_error) != 0 || len(new_warning) != 0 {
 			if flag == 0 {
 				flag = 1
-				result = "*** CheckSmatch\tFAILED ***\n"
+				result = "*** CheckSmatch         FAILED ***\n"
 			}
 
 			if len(new_error) != 0 {
