@@ -23,7 +23,7 @@ type Config struct {
 	// Password used to log in
 	Password string `json:"password"`
 	// Number of processes required to compile the kernel
-	Procs 	 string `json:"procs"`
+	Procs 	 int `json:"procs"`
 	// whitelist only to be processed
 	WhiteLists []string `json:"whiteLists"`
 }
@@ -38,7 +38,7 @@ type MailInfo struct {
 	IMAPUsername string   `json:"imapUsername"`
 	IMAPPassword string   `json:"imapPassword"`
 	WhiteLists   []string `json:"whiteLists"`
-	Procs 		 string   `json:"procs"`
+	Procs 		 int      `json:"procs"`
 }
 
 type EmailConfig struct {
@@ -67,6 +67,9 @@ func parseConfig(configFile string) MailInfo {
 	dec.DisallowUnknownFields()
 	if err = dec.Decode(&config); err != nil {
 		log.Fatal(err)
+	}
+	if config.Procs == 0 {
+		config.Procs = 20
 	}
 	// retrieve email account configuration based on domain
 	// TODO: add more configuration of email server

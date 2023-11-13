@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"strings"
 	"path/filepath"
+	"strconv"
 )
 
 // TODO: execute the command in the current directory
@@ -45,7 +46,7 @@ func (mailinfo MailInfo) botInit(KTBot_DIR string) bool {
 		if err != nil {
 			log.Fatalf("Failed to configure config: %v", err)
 		}
-		err = RunCommand(filepath.Join(KTBot_DIR, "mainline"), "make", "-j20")
+		err = RunCommand(filepath.Join(KTBot_DIR, "mainline"), "make", "-j" + strconv.Itoa(mailinfo.Procs))
 		if err != nil {
 			log.Fatalf("Compilation failed: %v", err)
 		}
@@ -64,7 +65,7 @@ func (mailinfo MailInfo) botInit(KTBot_DIR string) bool {
 		if err != nil {
 			log.Fatalf("Failed to configure config: %v", err)
 		}
-		err = RunCommand(filepath.Join(KTBot_DIR, "linux-next"), "make", "-j" + mailinfo.Procs)
+		err = RunCommand(filepath.Join(KTBot_DIR, "linux-next"), "make", "-j" + strconv.Itoa(mailinfo.Procs))
 		if err != nil {
 			log.Fatalf("Compilation failed: %v", err)
 		}
