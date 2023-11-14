@@ -28,7 +28,7 @@ func (mailinfo MailInfo) CheckWhiteLists(mailaddr string) bool {
 
 func (mailinfo MailInfo) SendEmail(toSend string, emailheader EmailHeader) {
 	//if pass all check, just send to patch committer
-	mailtext := "Hi, " + emailheader.FromName + "\n"
+	mailtext := "Hi, " + emailheader.FromName + "\n\n"
 	mailtext += "This email is automatically replied by KTestRobot(version 1.0). "
 	mailtext += "Please do not reply to this email.\n"
 	mailtext += "If you have any questions or suggestions about KTestRobot, "
