@@ -29,15 +29,15 @@ func (mailinfo MailInfo) CheckWhiteLists(mailaddr string) bool {
 func (mailinfo MailInfo) SendEmail(toSend string, emailheader EmailHeader) {
 	//if pass all check, just send to patch committer
 	mailtext := "Hi, " + emailheader.FromName + "\n"
-	mailtext += "This email is automatically replied by KTestRobot(Beta). "
+	mailtext += "This email is automatically replied by KTestRobot(version 1.0). "
 	mailtext += "Please do not reply to this email.\n"
 	mailtext += "If you have any questions or suggestions about KTestRobot, "
 	mailtext += "please contact Lishuchang <U202011978@hust.edu.cn>\n\n"
 	mailtext += toSend
-	mailtext += "\n-- \nKTestRobot(Beta)"
+	mailtext += "\n-- \nKTestRobot(version 1.0)"
 	log.Println("Connecting to smtp server")
 	to := []string{emailheader.FromAddr}
-	to = append(to, "kernel_testing_robot@googlegroups.com")
+	to = append(to, mailinfo.MailingList)
 	msg := []byte("To: " + emailheader.FromAddr + "\r\n" +
 		"Subject: Re: " + emailheader.Subject + "\r\n" +
 		"Cc: " + strings.Join(emailheader.Cc, ";") + "\r\n" +

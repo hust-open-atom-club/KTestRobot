@@ -26,6 +26,8 @@ type Config struct {
 	Procs 	 int `json:"procs"`
 	// whitelist only to be processed
 	WhiteLists []string `json:"whiteLists"`
+	//mail list for robot testing 
+	MailingList string `json:"mailingList"`
 }
 
 type MailInfo struct {
@@ -39,6 +41,7 @@ type MailInfo struct {
 	IMAPPassword string   `json:"imapPassword"`
 	WhiteLists   []string `json:"whiteLists"`
 	Procs 		 int      `json:"procs"`
+	MailingList  string   `json:"mailingList"`
 }
 
 type EmailConfig struct {
@@ -71,6 +74,9 @@ func parseConfig(configFile string) MailInfo {
 	if config.Procs == 0 {
 		config.Procs = 20
 	}
+	if config.MailingList == "" {
+		config.MailingList = "kernel_testing_robot@googlegroups.com"
+	}
 	// retrieve email account configuration based on domain
 	// TODO: add more configuration of email server
 	mapDomaintoEmailAccount := map[string]EmailConfig{
@@ -96,6 +102,7 @@ func parseConfig(configFile string) MailInfo {
 		config.Password,
 		config.WhiteLists,
 		config.Procs,
+		config.MailingList,
 	}
 	return mailinfo
 }
