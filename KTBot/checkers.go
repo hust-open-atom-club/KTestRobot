@@ -194,13 +194,25 @@ func CheckCocci(KTBot_DIR string, branch string, patchname string, changedpath s
 		unapply.Dir = dir
 		unapply.Run()
 
-		_, _, new_warning, new_error := Logcmp(outStr, outStr1, "WARNING", "ERROR")
-		if len(new_error) != 0 || len(new_warning) != 0 {
+		unsolved_warning, unsolved_error, new_warning, new_error := Logcmp(outStr, outStr1, "WARNING", "ERROR")
+		if len(new_error) != 0 || len(new_warning) != 0 || len(unsolved_error) != 0 || len(unsolved_warning) != 0 {
 			if flag == 0 {
 				flag = 1
 				result = "*** CheckCocci          FAILED ***\n"
 			}
 
+			if len(unsolved_error) != 0 {
+				result += "Unsolved error: \n"
+				for _, uerr := range unsolved_error {
+					result += uerr + "\n"
+				}
+			}
+			if len(unsolved_warning) != 0 {
+				result += "Unsolved warning: \n"
+				for _, uwarn := range unsolved_warning {
+					result += uwarn + "\n"
+				}
+			}
 			if len(new_error) != 0 {
 				result += "New error: \n"
 				for _, nerr := range new_error {
@@ -217,7 +229,7 @@ func CheckCocci(KTBot_DIR string, branch string, patchname string, changedpath s
 		if BugHash(errStr) != BugHash(errStr1) {
 			if flag == 0 {
 				flag = 1
-				result = "*** CheckCocci\tFAILED ***\n"
+				result = "*** CheckCocci          FAILED ***\n"
 			}
 			result += "\n" + errStr1 + "\n"
 		}
@@ -229,40 +241,100 @@ func CheckCocci(KTBot_DIR string, branch string, patchname string, changedpath s
 func Logcmp(pre string, after string, swarn string, serr string) ([]string, []string, []string, []string) {
 	pre_slice := strings.Split(pre, "\n")
 	after_slice := strings.Split(after, "\n")
-	var pre_warning, pre_error []string
 	var after_warning, after_error []string
+	var pre_warning_spf, pre_error_spf []string
+	var after_warning_spf, after_error_spf []string
+
 	var new_warning, new_error []string
+	var unsolved_warning, unsolved_error []string
 
 	//process prelog
 	for _, line := range pre_slice {
 		if strings.Contains(line, swarn) {
-			pre_warning = append(pre_warning, line)
+			end_1 := strings.Index(line, ":")
+			line_pre := line[0:end_1]
+			start_2 := strings.Index(line, " ") + 1
+			var end_2 int
+			if strings.Contains(line, "on lines:") {
+				end_2 = strings.LastIndex(line, ":")
+			} else {
+				end_2 = len(line)
+			}
+			line_after := line[start_2:end_2]
+
+			spf_line := line_pre + line_after
+			pre_warning_spf = append(pre_warning_spf, spf_line)
+
 		} else if strings.Contains(line, serr) {
-			pre_error = append(pre_error, line)
+			end_1 := strings.Index(line, ":")
+			line_pre := line[0:end_1]
+			start_2 := strings.Index(line, " ") + 1
+			var end_2 int
+			if strings.Contains(line, "on lines:") {
+				end_2 = strings.LastIndex(line, ":")
+			} else {
+				end_2 = len(line)
+			}
+			line_after := line[start_2:end_2]
+
+			spf_line := line_pre + line_after
+			pre_error_spf = append(pre_error_spf, spf_line)
 		}
 	}
 	//process afterlog
 	for _, line := range after_slice {
 		if strings.Contains(line, swarn) {
 			after_warning = append(after_warning, line)
+
+			end_1 := strings.Index(line, ":")
+			line_pre := line[0:end_1]
+			start_2 := strings.Index(line, " ") + 1
+			var end_2 int
+			if strings.Contains(line, "on lines:") {
+				end_2 = strings.LastIndex(line, ":")
+			} else {
+				end_2 = len(line)
+			}
+			line_after := line[start_2:end_2]
+
+			spf_line := line_pre + line_after
+			after_warning_spf = append(after_warning_spf, spf_line)
 		} else if strings.Contains(line, serr) {
 			after_error = append(after_error, line)
+
+			end_1 := strings.Index(line, ":")
+			line_pre := line[0:end_1]
+			start_2 := strings.Index(line, " ") + 1
+			var end_2 int
+			if strings.Contains(line, "on lines:") {
+				end_2 = strings.LastIndex(line, ":")
+			} else {
+				end_2 = len(line)
+			}
+			line_after := line[start_2:end_2]
+
+			spf_line := line_pre + line_after
+			after_error_spf = append(after_error_spf, spf_line)
 		}
 	}
 	//compare
-	for _, line := range after_warning {
-		_, ex := Find(pre_warning, line)
+	for i, line := range after_warning_spf {
+		_, ex := Find(pre_warning_spf, line)
 		if !ex {
-			new_warning = append(new_warning, line)
+			new_warning = append(new_warning, after_warning[i])
+		} else {
+			unsolved_warning = append(unsolved_warning, after_warning[i])
 		}
 	}
-	for _, line := range after_error {
-		_, ex := Find(pre_error, line)
+	for j, line := range after_error_spf {
+		_, ex := Find(pre_error_spf, line)
 		if !ex {
-			new_error = append(new_error, line)
+			new_error = append(new_error, after_error[j])
+		} else {
+			unsolved_error = append(unsolved_error, after_error[j])
 		}
 	}
-	return pre_warning, pre_error, new_warning, new_error
+	return unsolved_warning, unsolved_error, new_warning, new_error
 }
 
 func CheckCppcheck(KTBot_DIR string, branch string, patchname string, changedpath string) (bool, string) {
@@ -315,11 +387,24 @@ func CheckCppcheck(KTBot_DIR string, branch string, patchname string, changedpat
 		unapply.Dir = dir
 		unapply.Run()
 
-		_, _, new_warning, new_error := Logcmp(errStr+outStr, errStr1+outStr1, "warn", "error")
-		if len(new_error) != 0 || len(new_warning) != 0 {
+		unsolved_warning, unsolved_error, new_warning, new_error := Logcmp(errStr+outStr, errStr1+outStr1, "warn", "error")
+		if len(new_error) != 0 || len(new_warning) != 0 || len(unsolved_error) != 0 || len(unsolved_warning) != 0 {
 			if flag == 0 {
 				flag = 1
 				result = "*** CheckCppcheck\tFAILED ***\n"
+			}
+
+			if len(unsolved_error) != 0 {
+				result += "Unsolved error: \n"
+				for _, uerr := range unsolved_error {
+					result += uerr + "\n"
+				}
+			}
+			if len(unsolved_warning) != 0 {
+				result += "Unsolved warning: \n"
+				for _, uwarn := range unsolved_warning {
+					result += uwarn + "\n"
+				}
 			}
 			if len(new_error) != 0 {
 				result += "New error: \n"
@@ -334,6 +419,7 @@ func CheckCppcheck(KTBot_DIR string, branch string, patchname string, changedpat
 				}
 			}
 		}
+		
 	}
 	return true, result
 }
@@ -392,13 +478,25 @@ func CheckSmatch(KTBot_DIR string, branch string, patchname string, changedpath 
 		unapply.Dir = dir
 		unapply.Run()
 
-		_, _, new_warning, new_error := Logcmp(outStr, outStr1, "warn", "error")
-		if len(new_error) != 0 || len(new_warning) != 0 {
+		unsolved_warning, unsolved_error, new_warning, new_error := Logcmp(outStr, outStr1, "warn", "error")
+		if len(new_error) != 0 || len(new_warning) != 0 || len(unsolved_error) != 0 || len(unsolved_warning) != 0 {
 			if flag == 0 {
 				flag = 1
 				result = "*** CheckSmatch         FAILED ***\n"
 			}
 
+			if len(unsolved_error) != 0 {
+				result += "Unsolved error: \n"
+				for _, uerr := range unsolved_error {
+					result += uerr + "\n"
+				}
+			}
+			if len(unsolved_warning) != 0 {
+				result += "Unsolved warning: \n"
+				for _, uwarn := range unsolved_warning {
+					result += uwarn + "\n"
+				}
+			}
 			if len(new_error) != 0 {
 				result += "New error: \n"
 				for _, nerr := range new_error {
@@ -415,7 +513,7 @@ func CheckSmatch(KTBot_DIR string, branch string, patchname string, changedpath 
 		if BugHash(errStr) != BugHash(errStr1) {
 			if flag == 0 {
 				flag = 1
-				result = "*** CheckSmatch\tFAILED ***\n"
+				result = "*** CheckSmatch         FAILED ***\n"
 			}
 			result += "\n" + errStr1 + "\n"
 		}
