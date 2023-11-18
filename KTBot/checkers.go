@@ -8,9 +8,10 @@ import (
 	"crypto/sha256"
 	"strings"
 	"log"
+	"strconv"
 )
 
-func CheckPatchAll(KTBot_DIR string, patchname string, changedpath string) string {
+func (mailinfo MailInfo) CheckPatchAll(KTBot_DIR string, patchname string, changedpath string) string {
 	var result string
 	checkpatch_pass, checkpatch := CheckPatchpl(KTBot_DIR, patchname)
 	result += checkpatch
@@ -25,7 +26,7 @@ func CheckPatchAll(KTBot_DIR string, patchname string, changedpath string) strin
 		log.Println("ApplyPatch check done.")
 		//build check and static analysis
 		if apply2next_pass && apply2mainline_pass {
-			buildcheck_pass, buildcheck := BuildCheck(filepath.Join(KTBot_DIR, "linux-next"))
+			buildcheck_pass, buildcheck := mailinfo.BuildCheck(filepath.Join(KTBot_DIR, "linux-next"))
 			result += buildcheck
 			log.Println("BuildCheck done.")
 			if buildcheck_pass {
@@ -35,7 +36,7 @@ func CheckPatchAll(KTBot_DIR string, patchname string, changedpath string) strin
 			}
 		} else if apply2next_pass || apply2mainline_pass {
 			if apply2next_pass {
-				buildcheck_pass, buildcheck := BuildCheck(filepath.Join(KTBot_DIR, "linux-next"))
+				buildcheck_pass, buildcheck := mailinfo.BuildCheck(filepath.Join(KTBot_DIR, "linux-next"))
 				result += buildcheck
 				log.Println("BuildCheck done.")
 				if buildcheck_pass {
@@ -44,7 +45,7 @@ func CheckPatchAll(KTBot_DIR string, patchname string, changedpath string) strin
 					log.Println("StaticAnalysis done.")
 				}
 			} else {
-				buildcheck_pass, buildcheck := BuildCheck(filepath.Join(KTBot_DIR, "mainline"))
+				buildcheck_pass, buildcheck := mailinfo.BuildCheck(filepath.Join(KTBot_DIR, "mainline"))
 				result += buildcheck
 				log.Println("BuildCheck done.")
 				if buildcheck_pass {
@@ -66,10 +67,10 @@ func CheckPatchAll(KTBot_DIR string, patchname string, changedpath string) strin
 	return result
 }
 
-func BuildCheck(Dir string) (bool, string) {
+func (mailinfo MailInfo) BuildCheck(Dir string) (bool, string) {
 	flag := true
 	result := "*** BuildCheck          PASS ***\n"
-	cmd := exec.Command("make", "-j20")
+	cmd := exec.Command("make", "-j" + strconv.Itoa(mailinfo.Procs))
 	if Dir != "" {
 		cmd.Dir = Dir
 	}

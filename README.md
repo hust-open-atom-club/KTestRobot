@@ -43,6 +43,7 @@ The `config.json` file contains the following fields:
 - `username`: The email account used to receive kernel patches. This field should be set to a email address, e.g., "ktestrobot@126.com"
 - `password`: The password used to log in the mail server. This field should be set to the email password
 - `procs`: The number of processes used for kernel compilation. This field should be set to a number. The default value is 20.
+- `interval`: Time interval between two checks of the mail. This field should be set to a number. The default value is 20.
 - `whiteLists`: A list of email addresses that are considered as white-listed recipients. This field should be set to an array of email addresses
 - `mailinglist`: The mail list used to test the patch. This field should be set to a email address. The default value is "kernel_testing_robot@googlegroups.com"
 

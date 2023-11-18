@@ -2,6 +2,7 @@
     "username": "",
     "password": "",
     "procs": ,
+    "interval": ,
     "whiteLists": [
     ],
     "mailingList": ""

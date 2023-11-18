@@ -262,7 +262,7 @@ func (mailinfo MailInfo) MailProcess(mr *mail.Reader, KTBot_DIR string) (toSend 
 		}
 
 		checkresult := "--- Test Result ---\n"
-		checkres := CheckPatchAll(KTBot_DIR, patchname, changed_path)
+		checkres := mailinfo.CheckPatchAll(KTBot_DIR, patchname, changed_path)
 
 		logname := patchname[:len(patchname)-6]
 		log_file, err2 := os.Create(filepath.Join("log", logname))

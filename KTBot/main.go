@@ -24,6 +24,8 @@ type Config struct {
 	Password string `json:"password"`
 	// Number of processes required to compile the kernel
 	Procs 	 int `json:"procs"`
+	//Time interval between two checks of the mail
+	Interval int `json:"interval"`
 	// whitelist only to be processed
 	WhiteLists []string `json:"whiteLists"`
 	//mail list for robot testing 
@@ -41,6 +43,7 @@ type MailInfo struct {
 	IMAPPassword string   `json:"imapPassword"`
 	WhiteLists   []string `json:"whiteLists"`
 	Procs 		 int      `json:"procs"`
+	Interval     int      `json:"interval"`
 	MailingList  string   `json:"mailingList"`
 }
 
@@ -74,6 +77,9 @@ func parseConfig(configFile string) MailInfo {
 	if config.Procs == 0 {
 		config.Procs = 20
 	}
+	if config.Interval == 0 {
+		config.Interval = 20
+	}
 	if config.MailingList == "" {
 		config.MailingList = "kernel_testing_robot@googlegroups.com"
 	}
@@ -102,6 +108,7 @@ func parseConfig(configFile string) MailInfo {
 		config.Password,
 		config.WhiteLists,
 		config.Procs,
+		config.Interval,
 		config.MailingList,
 	}
 	return mailinfo
@@ -143,6 +150,6 @@ func main() {
 				}
 			}
 		}
-		time.Sleep(time.Minute * 20)
+		time.Sleep(time.Minute * time.Duration(mailinfo.Interval))
 	}
 }
