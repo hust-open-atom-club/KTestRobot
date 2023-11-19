@@ -86,6 +86,7 @@ func (mailinfo MailInfo) botInit(KTBot_DIR string) bool {
 		}
 	}
 
+	// TODO: this global cross-function database should be established at initialization
 	// err = RunCommand(KTBot_DIR, "ls", "-l", "linux-master")
 	// if err != nil {
 	// 	//smatch build

@@ -19,42 +19,42 @@ func (mailinfo MailInfo) CheckPatchAll(KTBot_DIR string, patchname string, chang
 	if checkpatch_pass {
 		// make this logic more simple
 		// directly try this patch in different branches
-		apply2next_pass, apply2next := ApplyPatch(KTBot_DIR, "linux-next", patchname)
-		result += apply2next
+		// TODO: develop a function to do the applycheck, buildcheck and static analysis
+		log.Println("Start ApplyPatch check in mainline.")
 		apply2mainline_pass, apply2mainline := ApplyPatch(KTBot_DIR, "mainline", patchname)
 		result += apply2mainline
-		log.Println("ApplyPatch check done.")
-		//build check and static analysis
-		if apply2next_pass && apply2mainline_pass {
-			buildcheck_pass, buildcheck := mailinfo.BuildCheck(filepath.Join(KTBot_DIR, "linux-next"))
+		log.Println("ApplyPatch check is done.")
+		if apply2mainline_pass {
+			//build check and static analysis
+			log.Println("Start BuildCheck in mainline.")
+			buildcheck_pass, buildcheck := mailinfo.BuildCheck(filepath.Join(KTBot_DIR, "mainline"))
 			result += buildcheck
-			log.Println("BuildCheck done.")
+			log.Println("BuildCheck is done.")
 			if buildcheck_pass {
-				staticres := StaticAnalysis(KTBot_DIR, "linux-next", patchname, changedpath)
+				log.Println("Start StaticAnalysis in mainline.")
+			 	staticres:= StaticAnalysis(KTBot_DIR, "mainline", patchname, changedpath)
 				result += staticres
-				log.Println("StaticAnalysis done.")
-			}
-		} else if apply2next_pass || apply2mainline_pass {
-			if apply2next_pass {
-				buildcheck_pass, buildcheck := mailinfo.BuildCheck(filepath.Join(KTBot_DIR, "linux-next"))
-				result += buildcheck
-				log.Println("BuildCheck done.")
-				if buildcheck_pass {
-				 	staticres:= StaticAnalysis(KTBot_DIR, "linux-next", patchname, changedpath)
-					result += staticres
-					log.Println("StaticAnalysis done.")
-				}
-			} else {
-				buildcheck_pass, buildcheck := mailinfo.BuildCheck(filepath.Join(KTBot_DIR, "mainline"))
-				result += buildcheck
-				log.Println("BuildCheck done.")
-				if buildcheck_pass {
-				 	staticres:= StaticAnalysis(KTBot_DIR, "mainline", patchname, changedpath)
-					result += staticres
-					log.Println("StaticAnalysis done.")
-				}
+				log.Println("StaticAnalysis is done.")
 			}
 		}
+		/*
+		log.Println("Start ApplyPatch check in linux-next.")
+		apply2next_pass, apply2next := ApplyPatch(KTBot_DIR, "linux-next", patchname)
+		result += apply2next
+		log.Println("ApplyPatch check is done.")
+		if apply2next_pass {
+			//build check and static analysis
+			log.Println("Start BuildCheck in linux-next.")
+			buildcheck_pass, buildcheck := mailinfo.BuildCheck(filepath.Join(KTBot_DIR, "linux-next"))
+			result += buildcheck
+			log.Println("BuildCheck is done.")
+			if buildcheck_pass {
+				log.Println("Start StaticAnalysis in linux-next.")
+			 	staticres:= StaticAnalysis(KTBot_DIR, "linux-next", patchname, changedpath)
+				result += staticres
+				log.Println("StaticAnalysis is done.")
+			}
+		}*/
 	}
 
 	/* boot
