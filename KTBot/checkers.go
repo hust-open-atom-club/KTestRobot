@@ -21,13 +21,13 @@ func (mailinfo MailInfo) Checkpatch_template(KTBot_DIR string, result string, br
 		log.Println("Start StaticAnalysis in ", branch, ".")
 		staticres:= StaticAnalysis(KTBot_DIR, branch, patchname, changedpath)
 		result += staticres
-		log.Println("StaticAnalysis  done.")
+		log.Println("StaticAnalysis done.")
 	}
 }
 
 func (mailinfo MailInfo) CheckPatchAll(KTBot_DIR string, patchname string, changedpath string) string {
 	var result string
-	log.Println("Start CheckPatchpl.")
+	log.Println("Start CheckPatchpl check.")
 	checkpatch_pass, checkpatch := CheckPatchpl(KTBot_DIR, patchname)
 	result += checkpatch
 	log.Println("CheckPatchpl done.")
@@ -38,6 +38,7 @@ func (mailinfo MailInfo) CheckPatchAll(KTBot_DIR string, patchname string, chang
 		apply_pass2, apply_res2 := ApplyPatch(KTBot_DIR, "mainline", patchname)
 		result += apply_res2
 		log.Println("ApplyPatch check done.")
+		// this logic is correct. First check linux-next, if err switch to mainline.
 		if apply_pass1 {
 			mailinfo.Checkpatch_template(KTBot_DIR, result, "linux-next", patchname, changedpath)
 		} else {
