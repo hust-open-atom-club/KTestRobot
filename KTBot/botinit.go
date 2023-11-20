@@ -4,9 +4,9 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"strings"
 	"path/filepath"
 	"strconv"
+	"strings"
 )
 
 // TODO: execute the command in the current directory
@@ -34,7 +34,7 @@ func (mailinfo MailInfo) botInit(KTBot_DIR string) bool {
 	err := RunCommand(KTBot_DIR, "ls", "-l", "mainline")
 	if err != nil {
 		mainline_url := "https://mirrors.hust.college/git/linux.git"
-		err = RunCommand(KTBot_DIR, "git", "clone", mainline_url)
+		err = RunCommand(KTBot_DIR, "git", "clone", "--depth=1", mainline_url)
 		if err != nil {
 			log.Fatalf("Download mainline failed: %v", err)
 		}
@@ -57,7 +57,7 @@ func (mailinfo MailInfo) botInit(KTBot_DIR string) bool {
 	err = RunCommand(KTBot_DIR, "ls", "-l", "linux-next")
 	if err != nil {
 		linux_next_url := "https://mirrors.hust.college/git/linux-next.git"
-		err = RunCommand(KTBot_DIR, "git", "clone", linux_next_url)
+		err = RunCommand(KTBot_DIR, "git", "clone", "--depth=1", linux_next_url)
 		if err != nil {
 			log.Fatalf("Download linux_next failed: %v", err)
 		}
@@ -105,19 +105,42 @@ func (mailinfo MailInfo) botInit(KTBot_DIR string) bool {
 	return true
 }
 
-func update(KTBot_DIR string) bool {
+func (mailinfo MailInfo) update(KTBot_DIR string) bool {
 	log.Println("Kernel Testing Robot is updating......")
 	err := RunCommand(filepath.Join(KTBot_DIR, "mainline"), "git", "pull")
 	if err != nil {
-		log.Fatalf("Update mainline failed: %v", err)
+		log.Println("Update mainline failed: ", err)
 	}
+	
 	err = RunCommand(filepath.Join(KTBot_DIR, "linux-next"), "git", "pull")
 	if err != nil {
-		log.Fatalf("Update linux_next failed: %v", err)
+		log.Println("Update linux_next failed: ", err)
+		log.Println("Start cloning linux-next again...")
+		err = RunCommand(KTBot_DIR, "rm", "-rf", "linux-next")
+		if err != nil {
+			log.Println("Failed to delete current linux-next folder!")
+		}
+		err = RunCommand(KTBot_DIR, "ls", "-l", "linux-next")
+		if err != nil {
+			linux_next_url := "https://mirrors.hust.college/git/linux-next.git"
+			err = RunCommand(KTBot_DIR, "git", "clone", "--depth=1", linux_next_url)
+			if err != nil {
+				log.Fatalf("Download linux_next failed: %v", err)
+			}
+			err = RunCommand(filepath.Join(KTBot_DIR, "linux-next"), "make", "allyesconfig")
+			if err != nil {
+				log.Fatalf("Failed to configure config: %v", err)
+			}
+			err = RunCommand(filepath.Join(KTBot_DIR, "linux-next"), "make", "-j" + strconv.Itoa(mailinfo.Procs))
+			if err != nil {
+				log.Fatalf("Compilation failed: %v", err)
+			}	
+		}
 	}
+
 	err = RunCommand(filepath.Join(KTBot_DIR, "smatch"), "git", "pull")
 	if err != nil {
-		log.Fatalf("smatch update failed: %v", err)
+		log.Println("smatch update failed: ", err)
 	}
 	return true
 }
